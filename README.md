@@ -1,0 +1,2 @@
+# krittika
+Heterogenous ML accelerator
