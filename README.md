@@ -1,2 +1,2 @@
-# krittika
+# Krittika (Pleiades)
 Heterogenous ML accelerator
