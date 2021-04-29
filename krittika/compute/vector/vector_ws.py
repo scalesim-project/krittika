@@ -1,17 +1,17 @@
 import numpy as np
 from scalesim.scale_config import scale_config
-from scalesim.compute.systolic_compute_os import systolic_compute_os
+from scalesim.compute.systolic_compute_ws import systolic_compute_ws
 
 # Treat this as a macro for initialization
 dummy_matrix = np.ones((1, 1)) * -1
 
 
-class VectorOS:
+class VectorWS:
     def __init__(self):
         # Compute Unit
         self.num_units = 1
         self.compute_unit_cfg = scale_config()
-        self.compute_unit = systolic_compute_os()
+        self.compute_unit = systolic_compute_ws()
 
         # Operand matrices
         self.vector_np = dummy_matrix
@@ -32,7 +32,7 @@ class VectorOS:
         config_vec = self.compute_unit_cfg.get_default_conf_as_list()
         config_vec[1] = int(self.num_units)
         config_vec[2] = 1
-        config_vec[9] = 'os'
+        config_vec[9] = 'ws'
         self.compute_unit_cfg.update_from_list(config_vec)
 
         if len(op_mat_vec.shape) == 1:
