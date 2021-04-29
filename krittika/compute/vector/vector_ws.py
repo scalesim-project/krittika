@@ -6,7 +6,7 @@ from scalesim.compute.systolic_compute_ws import systolic_compute_ws
 dummy_matrix = np.ones((1, 1)) * -1
 
 
-class VectorOS:
+class VectorWS:
     def __init__(self):
         # Compute Unit
         self.num_units = 1
