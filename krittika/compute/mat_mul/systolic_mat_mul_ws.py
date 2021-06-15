@@ -25,10 +25,7 @@ class SystolicMatMulWS:
 
     #
     def set_params(self,
-                   arr_row=1, arr_col=1,
-                   op_inmat1=dummy_matrix,
-                   op_inmat2=dummy_matrix,
-                   op_outmat=dummy_matrix):
+                   arr_row=1, arr_col=1):
 
         assert arr_row > 0 and arr_col > 0, 'Invalid array dimensions'
         self.arr_row = arr_row
@@ -41,9 +38,6 @@ class SystolicMatMulWS:
         self.compute_unit_cfg.update_from_list(config_vec)
 
         self.params_set = True
-        self.set_operands(op_inmat1=op_inmat1,
-                          op_inmat2=op_inmat2,
-                          op_outmat=op_outmat)
 
     #
     def set_operands(self,

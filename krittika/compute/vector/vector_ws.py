@@ -14,19 +14,16 @@ class VectorWS:
         self.compute_unit = systolic_compute_ws()
 
         # Operand matrices
-        self.vector_np = dummy_matrix
-        self.matrix_np = dummy_matrix
-        self.vec_out_np = dummy_matrix
+        self.op_inmat2 = dummy_matrix
+        self.op_inmat1 = dummy_matrix
+        self.op_outmat = dummy_matrix
 
         # Flags
         self.params_set = False
         self.operands_valid = False
 
     #
-    def set_params(self, num_units=1,
-                   op_mat_vec=dummy_matrix,
-                   op_mat_inmat=dummy_matrix,
-                   op_mat_outvec=dummy_matrix):
+    def set_params(self, num_units=1):
 
         assert num_units > 0, 'Invalid number of units'
         self.num_units = num_units
@@ -37,36 +34,29 @@ class VectorWS:
         self.compute_unit_cfg.update_from_list(config_vec)
 
         self.params_set = True
-        self.set_operands(op_mat_vec=op_mat_vec,
-                          op_mat_inmat=op_mat_inmat,
-                          op_mat_outvec=op_mat_outvec)
 
     #
     def set_operands(self,
-                     op_mat_vec=dummy_matrix,
-                     op_mat_inmat=dummy_matrix,
-                     op_mat_outvec=dummy_matrix):
+                     op_inmat2=dummy_matrix,
+                     op_inmat1=dummy_matrix,
+                     op_outmat=dummy_matrix):
 
         assert self.params_set, 'Params are not set'
 
         self.reset_compute_unit()
 
-        if len(op_mat_vec.shape) == 1:
-            op_mat_vec = op_mat_vec.reshape((op_mat_vec.shape[0], 1))
-
-        assert op_mat_vec.shape[0] == op_mat_inmat.shape[1], 'Inner dimensions do not match'
-        assert op_mat_inmat.shape[0] == op_mat_outvec.shape[0], \
+        assert op_inmat2.shape[0] == op_inmat1.shape[1], 'Inner dimensions do not match'
+        assert op_inmat1.shape[0] == op_outmat.shape[0], \
             'The outer dimensions of matrix and output should match'
-        assert op_mat_outvec.shape[1] == 1, 'The output should be a vector'
 
-        self.vector_np = op_mat_vec
-        self.matrix_np = op_mat_inmat
-        self.vec_out_np = op_mat_outvec
+        self.op_inmat2 = op_inmat2
+        self.op_inmat1 = op_inmat1
+        self.op_outmat = op_outmat
 
         self.compute_unit.set_params(config_obj=self.compute_unit_cfg,
-                                     ifmap_op_mat=op_mat_inmat,
-                                     filter_op_mat=op_mat_vec,
-                                     ofmap_op_mat=op_mat_outvec)
+                                     ifmap_op_mat=self.op_inmat1,
+                                     filter_op_mat=self.op_inmat2,
+                                     ofmap_op_mat=self.op_outmat)
 
         self.operands_valid = True
 
@@ -74,9 +64,9 @@ class VectorWS:
     def reset_compute_unit(self):
         self.compute_unit = systolic_compute_ws()
 
-        self.vector_np = dummy_matrix
-        self.matrix_np = dummy_matrix
-        self.vec_out_np = dummy_matrix
+        self.op_inmat2 = dummy_matrix
+        self.op_inmat1 = dummy_matrix
+        self.op_outmat = dummy_matrix
 
         self.operands_valid = False
 
