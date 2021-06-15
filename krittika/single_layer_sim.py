@@ -1,56 +1,79 @@
-from scalesim.scale_config import scale_config
-from scalesim.topology_utils import topologies
+import math
+
 from scalesim.compute.operand_matrix import operand_matrix
-from krittika.compute.scaled_out_compute_unit import ScaledOutComputeUnit
+from krittika.schedule_manager import PartitionManager
+from krittika.compute.compute_node import ComputeNode
 
 
 class SingleLayerSim:
+    '''
+        The objective of this class is to:
+        1. Read the operand matrices
+        2. Get the schedule from the scheduler class object
+        3. Partition the operand matrix
+        4. Run the partitioned operand matrix for compute
+        5. Run the generated demands from each compute element
+    '''
     def __init__(self):
-        self.compute_unit_obj = ScaledOutComputeUnit()
-        self.memory_unit_obj = MemoryUnit()
-        self.operand_matrix_obj = operand_matrix()
 
-        self.topo_obj = topologies()
-        self.layer_id = 1
+        # Member objects
+        self.op_mat_obj = operand_matrix()
+        self.scheduler = PartitionManager()
 
-        self.inmat1_prefetches_per_part = []
-        self.inmat2_prefetches_per_part = []
+        # Variables determining state
+        self.layer_id = 0
 
-        self.inmat1_demands_per_part = []
-        self.inmat2_demands_per_part = []
-        self.outmat_demands_per_part = []
+        # Flags
+        self.compute_done = False
+        self.mem_traces_done = False
 
-    #
-    def set_params(self, layer_id, topo_obj, compute_unit, memory_unit):
 
-        self.layer_id = layer_id
-        self.topo_obj = topo_obj
 
-        opmat_config = scale_config()
-        opmat_config.force_valid()
-        self.operand_matrix_obj.set_params(topoutil_obj=self.topo_obj, layer_id=layer_id, config_obj=opmat_config)
-
-        self.compute_unit_obj = compute_unit
-        self.memory_unit_obj = memory_unit
-
-    #
     def run(self):
+        self.num_input_part, self.num_filter_part = self.scheduler.get_layer_partitions(layer_id=self.layer_id)
 
-        input_mat1, input_mat2, output_mat = self.operand_matrix_obj.get_all_operand_matrix()
-        self.compute_unit_obj.update_operand_matrices(input_mat1, input_mat2, output_mat)
-        pf1, pf2 = self.compute_unit_obj.get_prefetch_matrices()
-        d1, d2, d3 = self.compute_unit_obj.get_demand_matrices()
+        self.run_compute_all_parts()
+        self.run_mem_sim_all_parts()
 
-        self.inmat1_prefetches_per_part = pf1
-        self.inmat2_prefetches_per_part = pf2
+    #
+    def run_compute_all_parts(self):
+        ifmap_matrix, filter_matrix, ofmap_matrix = self.op_mat_obj.get_all_operand_matrix()
+        compute_unit, opt_dataflow = self.scheduler.get_opt_compute_params(layer_id=self.layer_id)
 
-        self.memory_unit_obj.update_prefetch_mat_scaled_out(inmat1_prefetches_scaled_out=pf1,
-                                                            inmat2_prefetchs_scaled_out=pf2)
+        input_rows_per_part = math.ceil(ifmap_matrix.shape[0] / self.num_input_part)
+        filter_cols_per_part = math.ceil(filter_matrix.shape[1] / self.num_filter_part)
 
-        self.inmat1_demands_per_part = d1
-        self.inmat2_demands_per_part = d2
-        self.outmat_demands_per_part = d3
+        for inp_part in range(self.num_input_part):
+            ifmap_row_start = inp_part * input_rows_per_part
+            ifmap_row_end = min(ifmap_row_start + input_rows_per_part, ifmap_matrix.shape[0])
 
-        self.memory_unit_obj.service_requests_scaled_out(inmat1_requests_scaled_out=d1,
-                                                         inmat2_requests_scaled_out=d2,
-                                                         outmat_requests_scaled_out=d3)
+            ifmap_part = ifmap_matrix[ifmap_row_start:ifmap_row_end,:]
+
+            for filt_part in range(self.num_filter_part):
+
+                filt_col_start = filt_part * filter_cols_per_part
+                filt_col_end = min(filt_col_start + filter_cols_per_part, filter_matrix.shape[1])
+
+                filter_part = filter_matrix[:, filt_col_start: filt_col_end]
+                ofmap_part = ofmap_matrix[ifmap_row_start: ifmap_row_end, filt_col_start:filt_col_end]
+
+                this_part_compute_node = ComputeNode()
+                this_part_compute_node.set_params(config=self.config_obj,
+                                                  compute_unit=compute_unit,
+                                                  dataflow=opt_dataflow)
+
+                this_part_compute_node.set_operands(ifmap_opmat=ifmap_part,
+                                                    filter_opmat=filter_part,
+                                                    ofmap_opmat=ofmap_part)
+
+                this_part_compute_node.calc_demand_matrices()
+
+                self.compute_node_list += [this_part_compute_node]
+
+        self.compute_done = True
+
+
+
+
+
+
