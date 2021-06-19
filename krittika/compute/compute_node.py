@@ -29,7 +29,8 @@ class ComputeNode:
 
         # Flags
         self.params_set = False
-        self.operands_valid = True
+        self.operands_valid = False
+        self.matrices_valid = False
 
     #
     def set_params(self,
@@ -130,7 +131,34 @@ class ComputeNode:
         assert self.params_set and self.operands_valid
         self.selected_compute_node.create_all_operand_demand_matrix()
 
+        self.matrices_valid = True
 
+    #
+    def get_demand_matrices(self):
+        if not self.matrices_valid:
+            self.calc_demand_matrices()
+
+        return self.selected_compute_node.get_demand_matrices()
+
+    #
+    def get_prefetch_matrices(self):
+        if not self.matrices_valid:
+            self.calc_demand_matrices()
+
+        return self.selected_compute_node.get_fetch_matrices()
+
+    #
+    def get_num_compute(self):
+        assert self.operands_valid
+
+        num_compute = self.ifmap_matrix.shape[0] * self.ifmap_matrix.shape[1] * self.filter_matrix.shape[1]
+        return num_compute
+
+    #
+    def get_num_mac_units(self):
+        assert self.params_set
+
+        return self.compute_unit.get_num_macs()
 
 
 

@@ -51,7 +51,7 @@ class KrittikaConfig:
         cfg.read(filename)
 
         section = 'GENERAL'
-        self.run_name = int(cfg.get(section, 'Run Name'))
+        self.run_name = cfg.get(section, 'Run Name')
 
         section = 'COMPUTE'
         self.num_compute_cores = int(cfg.get(section, 'Num Compute Cores'))
@@ -83,13 +83,13 @@ class KrittikaConfig:
             self.vector_present = False
 
         part_strategy = cfg.get(section, 'Partition Strategy')
-        assert part_strategy in ['USER', 'IFMAP', 'FILTER', 'AUTO'], \
-            'Invalid partition mode ' + part_strategy + '. Supported vals: [USER, AUTO, IFMAP, FILTER]'
+        assert part_strategy in ['USER', 'IFMAP', 'FILTER', 'CONST_DF', 'AUTO'], \
+            'Invalid partition mode ' + part_strategy + '. Supported vals: [USER, AUTO, IFMAP, FILTER, CONST_DF]'
         self.partition_mode = part_strategy
 
         section = 'MEMORY'
         ifmap_offset = int(cfg.get(section, 'IFMAP Offset'))
-        filter_offset = int(cfg.get(section, 'FITLER Offset'))
+        filter_offset = int(cfg.get(section, 'FILTER Offset'))
         ofmap_offset = int(cfg.get(section, 'OFMAP Offset'))
 
         assert ifmap_offset >= 0, 'Offsets cannot be negative'
@@ -115,7 +115,7 @@ class KrittikaConfig:
 
         ifmap_bw = int(cfg.get(section, 'Per Core User IFMAP buf interface BW (Words/Cycle)'))
         filter_bw = int(cfg.get(section, 'Per Core User FILTER buf interface BW (Words/Cycle)'))
-        ofmap_bw = int(cfg.get(section, 'Per Core User 0FMAP buf interface BW (Words/Cycle)'))
+        ofmap_bw = int(cfg.get(section, 'Per Core User OFMAP buf interface BW (Words/Cycle)'))
 
         assert ifmap_bw > 0, 'Invalid BW value'
         assert filter_bw > 0, 'Invalid BW value'
@@ -142,7 +142,7 @@ class KrittikaConfig:
                         per_core_ifmap_bw=1, per_core_filter_bw=1, per_core_ofmap_bw=1
                         ):
 
-        assert run_name is not '', 'Please provide a valid run name'
+        assert run_name != '', 'Please provide a valid run name'
         assert matmul_arr_row > 0 and matmul_arr_col > 0, 'Dimensions should be non zero and positive'
         assert matmul_dataflow in ['os', 'ws', 'is'], 'Invalid dataflow: ' + matmul_dataflow
         assert vector_macs > 0, 'Vector dimensions should be non zero and positive'
@@ -150,7 +150,7 @@ class KrittikaConfig:
         assert ifmap_offset >= 0, 'Offsets should be non negative integers'
         assert filter_offset >= 0, 'Offsets should be non negative integers'
         assert ofmap_offset >= 0, 'Offsets should be non negative integers'
-        assert partition_mode in ['USER', 'AUTO', 'IFMAP', 'FILTER'], 'Invalid partition mode provided'
+        assert partition_mode in ['USER', 'AUTO', 'IFMAP', 'FILTER', 'CONST_DF'], 'Invalid partition mode provided'
         assert ifmap_sram_kb > 0, 'SRAM sizes should be a positive integer'
         assert filter_sram_kb > 0, 'SRAM sizes should be a positive integer'
         assert ofmap_sram_kb > 0, 'SRAM sizes should be a positive integer'
@@ -178,7 +178,7 @@ class KrittikaConfig:
     #
     def set_run_name(self, input_run_name=''):
         assert self.config_valid
-        assert input_run_name is not ''
+        assert input_run_name != ''
 
         self.run_name = input_run_name
 
@@ -232,7 +232,7 @@ class KrittikaConfig:
     #
     def set_partition_mode(self, part_mode = ''):
         assert self.config_valid
-        assert part_mode in ['USER', 'AUTO', 'IFMAP', 'FILTER'], 'Invalid partition mode provided'
+        assert part_mode in ['USER', 'AUTO', 'IFMAP', 'FILTER', 'CONST_DF'], 'Invalid partition mode provided'
 
         self.partition_mode = part_mode
 
@@ -276,6 +276,10 @@ class KrittikaConfig:
         assert self.config_valid
         return self.matmul_present, self.vector_present
 
+    def get_num_cores(self):
+        assert self.config_valid
+        return self.num_compute_cores
+
     #
     def get_matmul_dims(self):
         assert self.config_valid and self.matmul_present
@@ -305,6 +309,10 @@ class KrittikaConfig:
     def get_partition_mode(self):
         assert self.config_valid
         return self.partition_mode
+
+    #
+    def is_autopartition(self):
+        return self.partition_mode != 'USER'
 
     #
     def get_per_unit_sram_sizes_kb(self):
@@ -367,7 +375,7 @@ class KrittikaConfig:
         cp.set(section, 'Bandwidth Mode', str(self.bandwidth_use_mode))
         cp.set(section, 'Per Core User IFMAP buf interface BW (Words/Cycle)',
                             str(self.per_unit_user_ifmap_interface_bw))
-        cp.set(section, 'Per Core User FITLER buf interface BW (Words/Cycle)',
+        cp.set(section, 'Per Core User FILTER buf interface BW (Words/Cycle)',
                             str(self.per_unit_user_filter_interface_bw))
         cp.set(section, 'Per Core User OFMAP buf interface BW (Words/Cycle)',
                             str(self.per_unit_user_ofmap_interface_bw))
@@ -381,3 +389,8 @@ class KrittikaConfig:
         default = KrittikaConfig()
         default.__force_valid()
         default.write_config_file(filename)
+
+
+if __name__ == '__main__':
+    obj = KrittikaConfig()
+    obj.write_default_config()

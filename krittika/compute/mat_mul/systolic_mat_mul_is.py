@@ -150,3 +150,8 @@ class SystolicMatMulIS:
     def get_outmat_writes(self):
         assert self.operands_valid, 'Set the operands first'
         return self.compute_unit.get_ofmap_requests()
+
+    #
+    def get_num_mac(self):
+        assert self.params_set
+        return self.arr_row * self.arr_col
