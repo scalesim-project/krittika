@@ -4,7 +4,7 @@ import os.path
 from scalesim.compute.operand_matrix import operand_matrix
 from scalesim.memory.double_buffered_scratchpad_mem import double_buffered_scratchpad
 
-from krittika.config.krittika_config import KrittikaConfig
+from krittika.krittika_config import KrittikaConfig
 from krittika.partition_manager import PartitionManager
 from krittika.compute.compute_node import ComputeNode
 

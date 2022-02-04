@@ -1,7 +1,7 @@
 import math
 
 from scalesim.topology_utils import topologies
-from krittika.config.krittika_config import KrittikaConfig
+from krittika.krittika_config import KrittikaConfig
 from krittika.static_utilities import StaticUtilities
 
 
@@ -63,8 +63,8 @@ class PartitionManager:
         num_cores = self.config.get_num_cores()
         num_layers = self.workload.get_num_layers()
         partitions_list = StaticUtilities.get_factors_as_pairs(num_cores)
-        matmul_dataflow_list = [self.config.get_matmul_dataflow()]
-        vector_dataflow_list = [self.config.get_vector_dataflow()]
+        matmul_dataflow_list = [self.config.get_default_matmul_dataflow()]
+        vector_dataflow_list = [self.config.get_default_vector_dataflow()]
 
         for lid in range(num_layers):
             opt_unit, opt_dataflow, input_parts, filter_parts \
@@ -82,8 +82,8 @@ class PartitionManager:
         num_cores = self.config.get_num_cores()
         num_layers = self.workload.get_num_layers()
         partitions_list = [[num_cores, 1]]
-        matmul_dataflow_list = [self.config.get_matmul_dataflow()]
-        vector_dataflow_list = [self.config.get_vector_dataflow()]
+        matmul_dataflow_list = [self.config.get_default_matmul_dataflow()]
+        vector_dataflow_list = [self.config.get_default_vector_dataflow()]
 
         for lid in range(num_layers):
             opt_unit, opt_dataflow, input_parts, filter_parts \
@@ -101,8 +101,8 @@ class PartitionManager:
         num_cores = self.config.get_num_cores()
         num_layers = self.workload.get_num_layers()
         partitions_list = [[1, num_cores]]
-        matmul_dataflow_list = [self.config.get_matmul_dataflow()]
-        vector_dataflow_list = [self.config.get_vector_dataflow()]
+        matmul_dataflow_list = [self.config.get_default_matmul_dataflow()]
+        vector_dataflow_list = [self.config.get_default_vector_dataflow()]
 
         for lid in range(num_layers):
             opt_unit, opt_dataflow, input_parts, filter_parts \
@@ -180,7 +180,7 @@ class PartitionManager:
         min_runtime = 10 ** 10
         M, N, K = self.workload.get_transformed_mnk_dimensions()[layer_id]
 
-        num_vec_units = self.config.get_vector_dim()
+        num_vec_units = self.config.get_vector_dims()
 
         opt_df = 'os'
         opt_input_part = 1
