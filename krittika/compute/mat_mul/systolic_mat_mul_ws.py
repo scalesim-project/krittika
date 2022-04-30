@@ -31,7 +31,8 @@ class SystolicMatMulWS:
         self.arr_row = arr_row
         self.arr_col = arr_col
 
-        config_vec = self.compute_unit_cfg.get_default_conf_as_list()
+        self.compute_unit_cfg.read_conf_file('../configs/scale.cfg')
+        config_vec = self.compute_unit_cfg.get_conf_as_list()
         config_vec[1] = int(self.arr_row)
         config_vec[2] = int(self.arr_col)
         config_vec[9] = 'ws'

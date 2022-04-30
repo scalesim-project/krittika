@@ -77,7 +77,8 @@ class Simulator:
 
         # Update the offsets to generate operand matrices
         single_arr_config = scale_config()
-        conf_list = scale_config.get_default_conf_as_list()
+        single_arr_config.read_conf_file('../configs/scale.cfg')
+        conf_list = single_arr_config.get_conf_as_list()
         user_offsets = self.config_obj.get_operand_offsets()
         conf_list[6] = user_offsets[0]
         conf_list[7] = user_offsets[1]
@@ -100,7 +101,7 @@ class Simulator:
                                       layer_id=layer_id,
                                       log_top_path=self.top_path,
                                       verbosity=self.verbose)
-            this_layer_sim.run()
+            this_layer_sim.run(scale_config_obj=single_arr_config, topoutil_obj=self.workload_obj,)
             self.single_layer_objects_list += [this_layer_sim]
 
             if self.save_traces:
@@ -108,7 +109,7 @@ class Simulator:
                     print('SAVING TRACES')
                 this_layer_sim.save_traces()
 
-        self.generate_all_reports()
+        #self.generate_all_reports()
         self.runs_done = True
 
     # Report generation
