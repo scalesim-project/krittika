@@ -99,10 +99,9 @@ class SingleLayerSim:
         self.params_set = True
 
     #
-    def run(self, scale_config_obj=None, topoutil_obj=None):
+    def run(self):
         self.num_input_part, self.num_filter_part = self.partitioner_obj.get_layer_partitions(layer_id=self.layer_id)
-        self.scale_config_obj = scale_config_obj
-        self.topoutil_obj = topoutil_obj
+
         self.compute_node_list = []
 
         self.run_compute_all_parts()
@@ -110,8 +109,6 @@ class SingleLayerSim:
 
     #
     def run_compute_all_parts(self):
-        self.op_mat_obj.set_params(config_obj=self.scale_config_obj,topoutil_obj=self.topoutil_obj,layer_id=self.layer_id)
-        self.op_mat_obj.create_operand_matrices()
         ifmap_matrix, filter_matrix, ofmap_matrix = self.op_mat_obj.get_all_operand_matrix()
         compute_unit, opt_dataflow = self.partitioner_obj.get_opt_compute_params(layer_id=self.layer_id)
 
@@ -152,17 +149,8 @@ class SingleLayerSim:
         assert self.compute_done
 
         bandwidth_mode = self.config_obj.get_bandwidth_use_mode()
-        if bandwidth_mode =='USER':
-            estimate_bandwidth_mode = False
-        elif bandwidth_mode == 'CALC':
-            estimate_bandwidth_mode = True
-        else:
-            print('wrong mode')
-        per_core_ifmap_buf_size, per_core_filter_buf_size, per_core_ofmap_buf_size = self.config_obj.get_per_unit_sram_sizes_kb()
-        per_core_ifmap_buf_size = per_core_ifmap_buf_size * 1024
-        per_core_filter_buf_size = per_core_filter_buf_size * 1024
-        per_core_ofmap_buf_size = per_core_ofmap_buf_size * 1024
-
+        per_core_ifmap_buf_size, per_core_fitler_buf_size, per_core_ofmap_buf_size \
+            = self.config_obj.get_per_unit_sram_sizes_kb() * 1024
 
         per_core_ifmap_bw, per_core_filter_bw, per_core_ofmap_bw\
             = self.config_obj.get_interface_bandwidths()
@@ -171,9 +159,9 @@ class SingleLayerSim:
 
             this_part_mem = double_buffered_scratchpad()
             this_part_mem.set_params(verbose=self.verbose,
-                                     estimate_bandwidth_mode=estimate_bandwidth_mode,
+                                     estimate_bandwidth_mode=bandwidth_mode,
                                      ifmap_buf_size_bytes=per_core_ifmap_buf_size,
-                                     filter_buf_size_bytes=per_core_filter_buf_size,
+                                     filter_buf_size_bytes=per_core_fitler_buf_size,
                                      ofmap_buf_size_bytes=per_core_ofmap_buf_size,
                                      ifmap_backing_buf_bw=per_core_ifmap_bw,
                                      filter_backing_buf_bw=per_core_filter_bw,
@@ -184,13 +172,11 @@ class SingleLayerSim:
             this_node_ifmap_demand_mat, this_node_filter_demand_mat, this_node_ofmap_demand_mat \
                 = compute_node.get_demand_matrices()
 
-            this_node_ifmap_fetch_mat, this_node_filter_fetch_mat = compute_node.get_prefetch_matrices()
+            this_node_ifmap_fetch_mat, this_node_filter_fetch_mat = compute_node.get_fetch_matrices()
 
-            if not estimate_bandwidth_mode:
-                this_part_mem.set_read_buf_prefetch_matrices(ifmap_prefetch_mat=this_node_ifmap_fetch_mat,
+            this_part_mem.set_read_buf_prefetch_matrices(ifmap_prefetch_mat=this_node_ifmap_fetch_mat,
                                                          filter_prefetch_mat=this_node_filter_fetch_mat
                                                          )
-
             this_part_mem.service_memory_requests(this_node_ifmap_demand_mat,
                                                   this_node_filter_demand_mat,
                                                   this_node_ofmap_demand_mat)

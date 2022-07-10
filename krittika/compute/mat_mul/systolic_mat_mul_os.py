@@ -95,7 +95,7 @@ class SystolicMatMulOS:
 
     #
     def get_mat2_operand_demand_matrix(self):
-        return self.compute_unit.get_ifmap_demand_mat()
+        return self.compute_unit.get_filter_demand_mat()
 
     #
     def get_out_operand_demand_matrix(self):
@@ -117,7 +117,7 @@ class SystolicMatMulOS:
     #
     def get_mat2_operand_fetch_matrix(self):
         assert self.operands_valid, 'Set the operands first'
-        return self.compute_unit.get_ifmap_prefetch_mat()
+        return self.compute_unit.get_filter_prefetch_mat()
 
     #
     def get_fetch_matrices(self):
