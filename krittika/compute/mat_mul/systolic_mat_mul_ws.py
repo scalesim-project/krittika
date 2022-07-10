@@ -31,7 +31,8 @@ class SystolicMatMulWS:
         self.arr_row = arr_row
         self.arr_col = arr_col
 
-        config_vec = self.compute_unit_cfg.get_default_conf_as_list()
+        self.compute_unit_cfg.read_conf_file('../configs/scale.cfg')
+        config_vec = self.compute_unit_cfg.get_conf_as_list()
         config_vec[1] = int(self.arr_row)
         config_vec[2] = int(self.arr_col)
         config_vec[9] = 'ws'
@@ -95,7 +96,7 @@ class SystolicMatMulWS:
 
     #
     def get_mat2_operand_demand_matrix(self):
-        return self.compute_unit.get_ifmap_demand_mat()
+        return self.compute_unit.get_filter_demand_mat()
 
     #
     def get_out_operand_demand_matrix(self):
@@ -117,7 +118,7 @@ class SystolicMatMulWS:
     #
     def get_mat2_operand_fetch_matrix(self):
         assert self.operands_valid, 'Set the operands first'
-        return self.compute_unit.get_ifmap_prefetch_mat()
+        return self.compute_unit.get_filter_prefetch_mat()
 
     #
     def get_fetch_matrices(self):
