@@ -24,8 +24,7 @@ class SystolicMatMulOS:
         self.operands_valid = False
 
     #
-    def set_params(self,
-                   arr_row=1, arr_col=1):
+    def set_params(self, bw_mode = "CALC", bandwidth = 1 , arr_row=1, arr_col=1):
 
         assert arr_row > 0 and arr_col > 0, 'Invalid array dimensions'
         self.arr_row = arr_row
@@ -35,6 +34,9 @@ class SystolicMatMulOS:
         config_vec[1] = int(self.arr_row)
         config_vec[2] = int(self.arr_col)
         config_vec[9] = 'os'
+        config_vec[10] = bw_mode
+        config_vec.append(bandwidth)
+
         self.compute_unit_cfg.update_from_list(config_vec)
 
         self.params_set = True
@@ -95,7 +97,7 @@ class SystolicMatMulOS:
 
     #
     def get_mat2_operand_demand_matrix(self):
-        return self.compute_unit.get_ifmap_demand_mat()
+        return self.compute_unit.get_filter_demand_mat()
 
     #
     def get_out_operand_demand_matrix(self):
@@ -117,7 +119,7 @@ class SystolicMatMulOS:
     #
     def get_mat2_operand_fetch_matrix(self):
         assert self.operands_valid, 'Set the operands first'
-        return self.compute_unit.get_ifmap_prefetch_mat()
+        return self.compute_unit.get_filter_prefetch_mat()
 
     #
     def get_fetch_matrices(self):

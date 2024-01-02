@@ -150,7 +150,7 @@ class SingleLayerSim:
 
         bandwidth_mode = self.config_obj.get_bandwidth_use_mode()
         per_core_ifmap_buf_size, per_core_fitler_buf_size, per_core_ofmap_buf_size \
-            = self.config_obj.get_per_unit_sram_sizes_kb() * 1024
+            = ([i * 1024 for i in self.config_obj.get_per_unit_sram_sizes_kb()])
 
         per_core_ifmap_bw, per_core_filter_bw, per_core_ofmap_bw\
             = self.config_obj.get_interface_bandwidths()
@@ -172,9 +172,9 @@ class SingleLayerSim:
             this_node_ifmap_demand_mat, this_node_filter_demand_mat, this_node_ofmap_demand_mat \
                 = compute_node.get_demand_matrices()
 
-            this_node_ifmap_fetch_mat, this_node_filter_fetch_mat = compute_node.get_fetch_matrices()
-
-            this_part_mem.set_read_buf_prefetch_matrices(ifmap_prefetch_mat=this_node_ifmap_fetch_mat,
+            this_node_ifmap_fetch_mat, this_node_filter_fetch_mat = compute_node.get_prefetch_matrices()
+            if (self.config_obj.get_bandwidth_use_mode()=="USER"):
+                this_part_mem.set_read_buf_prefetch_matrices(ifmap_prefetch_mat=this_node_ifmap_fetch_mat,
                                                          filter_prefetch_mat=this_node_filter_fetch_mat
                                                          )
             this_part_mem.service_memory_requests(this_node_ifmap_demand_mat,
