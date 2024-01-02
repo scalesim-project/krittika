@@ -13,7 +13,6 @@ class SystolicMatMulWS:
         self.arr_col = 1
         self.compute_unit_cfg = scale_config()
         self.compute_unit = systolic_compute_ws()
-
         # Operand matrices
         self.inmat1_np = dummy_matrix
         self.inmat2_np = dummy_matrix
@@ -24,18 +23,20 @@ class SystolicMatMulWS:
         self.operands_valid = False
 
     #
-    def set_params(self,
-                   arr_row=1, arr_col=1):
+    def set_params(self, bw_mode = "CALC", bandwidth = 1 , arr_row=1, arr_col=1):
 
         assert arr_row > 0 and arr_col > 0, 'Invalid array dimensions'
         self.arr_row = arr_row
         self.arr_col = arr_col
 
-        self.compute_unit_cfg.read_conf_file('../configs/scale.cfg')
-        config_vec = self.compute_unit_cfg.get_conf_as_list()
+        # to update path
+        config_vec = self.compute_unit_cfg.get_default_conf_as_list()
         config_vec[1] = int(self.arr_row)
         config_vec[2] = int(self.arr_col)
         config_vec[9] = 'ws'
+        config_vec[10] = bw_mode
+        config_vec.append(bandwidth)
+
         self.compute_unit_cfg.update_from_list(config_vec)
 
         self.params_set = True

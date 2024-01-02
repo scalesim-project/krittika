@@ -260,7 +260,6 @@ class PartitionManager:
 
         partition_data = self.partition_table[layer_id]
         opt_compute_unit = partition_data[3]
-        print(opt_compute_unit)
         opt_dataflow = partition_data[4]
 
         return opt_compute_unit, opt_dataflow

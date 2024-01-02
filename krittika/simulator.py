@@ -82,6 +82,8 @@ class Simulator:
         conf_list[6] = user_offsets[0]
         conf_list[7] = user_offsets[1]
         conf_list[8] = user_offsets[2]
+        conf_list[10] = self.config_obj.get_bandwidth_use_mode()
+        conf_list.append(self.config_obj.get_interface_bandwidths()[0])
         single_arr_config.update_from_list(conf_list=conf_list)
 
         for layer_id in range(num_layers):
@@ -92,6 +94,7 @@ class Simulator:
             this_layer_op_mat_obj.set_params(config_obj=single_arr_config,
                                              topoutil_obj=self.workload_obj,
                                              layer_id=layer_id)
+            this_layer_op_mat_obj.create_operand_matrices()
 
             this_layer_sim = SingleLayerSim()
             this_layer_sim.set_params(config_obj=self.config_obj,
@@ -108,7 +111,7 @@ class Simulator:
                     print('SAVING TRACES')
                 this_layer_sim.save_traces()
 
-        self.generate_all_reports()
+        # self.generate_all_reports()
         self.runs_done = True
 
     # Report generation

@@ -56,7 +56,9 @@ class ComputeNode:
                 self.selected_compute_node = SystolicMatMulIS()
 
             arr_row, arr_col = self.config_obj.get_matmul_dims()
-            self.selected_compute_node.set_params(arr_row=arr_row, arr_col=arr_col)
+            bw_mode = self.config_obj.get_bandwidth_use_mode()
+            bandwidth = self.config_obj.get_interface_bandwidths()[0]
+            self.selected_compute_node.set_params(bw_mode = bw_mode, bandwidth = bandwidth, arr_row=arr_row, arr_col=arr_col)
 
             if self.operands_valid:
                 self.selected_compute_node.set_operands(
