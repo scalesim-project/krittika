@@ -160,7 +160,37 @@ class ComputeNode:
     def get_num_mac_units(self):
         assert self.params_set
 
-        return self.compute_unit.get_num_macs()
+        return self.selected_compute_node.get_num_mac()
+    
+    #
+    def get_avg_mapping_efficiency(self):
+        assert self.operands_valid
+
+        return self.selected_compute_node.get_avg_mapping_efficiency()
+
+    #
+    def get_avg_compute_utilization(self):
+        assert self.operands_valid
+
+        return self.selected_compute_node.get_avg_compute_utilization()
+    
+    #
+    def get_ifmap_requests(self):
+        assert self.operands_valid
+
+        return self.selected_compute_node.get_mat1_reads()
+
+    #
+    def get_filter_requests(self):
+        assert self.operands_valid
+
+        return self.selected_compute_node.get_mat2_reads()
+    
+    #
+    def get_ofmap_requests(self):
+        assert self.operands_valid
+
+        return self.selected_compute_node.get_outmat_writes()
 
 
 

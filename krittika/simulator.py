@@ -30,8 +30,12 @@ class Simulator:
         self.overall_utils_report_grid = []
         self.mapping_eff_report_grid = []
         self.cycles_report_avg_items = []
-        self.cycles_report_ready = False
-
+        self.cycles_report_ready = False        
+        self.bandwidth_report_avg_items = []
+        self.bandwidth_report_ready = False
+        self.detailed_report_avg_items = []
+        self.detailed_report_ready = False
+        
         # Flags
         self.params_valid = False
         self.runs_done = False
@@ -106,13 +110,22 @@ class Simulator:
             this_layer_sim.run()
             self.single_layer_objects_list += [this_layer_sim]
 
-            if self.save_traces:
-                if self.verbose:
-                    print('SAVING TRACES')
-                this_layer_sim.save_traces()
+            if self.verbose:
+                print('SAVING TRACES')
+            this_layer_sim.save_traces()
+            this_layer_sim.gather_report_items_across_cores()
 
-        # self.generate_all_reports()
         self.runs_done = True
+        self.generate_all_reports()
+
+    def generate_all_reports(self):
+        self.create_cycles_report_structures()
+        self.create_bandwidth_report_structures()
+        self.create_detailed_report_structures()
+        self.save_all_cycle_reports()
+        self.save_all_bw_reports()
+        self.save_all_detailed_reports()
+
 
     # Report generation
     def create_cycles_report_structures(self):
@@ -120,13 +133,11 @@ class Simulator:
 
         for lid in range(self.workload_obj.get_num_layers()):
             this_layer_sim_obj = self.single_layer_objects_list[lid]
-
-            total_cycles_list = this_layer_sim_obj.get_total_cycles_list()
-            stall_cycles_list = this_layer_sim_obj.get_stall_cycles_list()
-            overall_util_list = this_layer_sim_obj.get_overall_util_list()
-            mapping_eff_list = this_layer_sim_obj.get_mapping_eff_list()
-            compute_util_list = this_layer_sim_obj.get_compute_util_list()
-
+            total_cycles_list = this_layer_sim_obj.total_cycles_list
+            stall_cycles_list = this_layer_sim_obj.stall_cycles_list
+            overall_util_list = this_layer_sim_obj.overall_util_list
+            mapping_eff_list = this_layer_sim_obj.mapping_eff_list
+            compute_util_list = this_layer_sim_obj.compute_util_list
             self.cycles_report_avg_items += [statistics.mean(total_cycles_list)]
             self.cycles_report_avg_items += [statistics.mean(stall_cycles_list)]
             self.cycles_report_avg_items += [statistics.mean(overall_util_list)]
@@ -137,21 +148,137 @@ class Simulator:
 
 
     def create_bandwidth_report_structures(self):
-        print('WIP')
+        assert self.runs_done
+
+        for lid in range(self.workload_obj.get_num_layers()):
+            this_layer_sim_obj = self.single_layer_objects_list[lid]
+            avg_ifmap_sram_bw_list = this_layer_sim_obj.avg_ifmap_sram_bw_list
+            avg_ifmap_dram_bw_list = this_layer_sim_obj.avg_ifmap_dram_bw_list
+            avg_filter_sram_bw_list = this_layer_sim_obj.avg_filter_sram_bw_list
+            avg_filter_dram_bw_list = this_layer_sim_obj.avg_filter_dram_bw_list
+            avg_ofmap_sram_bw_list = this_layer_sim_obj.avg_ofmap_sram_bw_list
+            avg_ofmap_dram_bw_list = this_layer_sim_obj.avg_ofmap_dram_bw_list
+            
+            self.bandwidth_report_avg_items += [statistics.mean(avg_ifmap_sram_bw_list)]
+            self.bandwidth_report_avg_items += [statistics.mean(avg_filter_sram_bw_list)]
+            self.bandwidth_report_avg_items += [statistics.mean(avg_ofmap_sram_bw_list)]
+            self.bandwidth_report_avg_items += [statistics.mean(avg_ifmap_dram_bw_list)]
+            self.bandwidth_report_avg_items += [statistics.mean(avg_filter_dram_bw_list)]
+            self.bandwidth_report_avg_items += [statistics.mean(avg_ofmap_dram_bw_list)]
+
+        self.bandwidth_report_ready = True
+
+
 
     def create_detailed_report_structures(self):
-        print('WIP')
+        assert self.runs_done
+
+        for lid in range(self.workload_obj.get_num_layers()):
+            this_layer_sim_obj = self.single_layer_objects_list[lid]
+            ifmap_sram_start_cycle_list = this_layer_sim_obj.ifmap_sram_start_cycle_list
+            ifmap_sram_stop_cycle_list = this_layer_sim_obj.ifmap_sram_stop_cycle_list
+            ifmap_sram_reads_list = this_layer_sim_obj.ifmap_sram_reads_list
+            filter_sram_start_cycle_list = this_layer_sim_obj.filter_sram_start_cycle_list
+            filter_sram_stop_cycle_list = this_layer_sim_obj.filter_sram_stop_cycle_list
+            filter_sram_reads_list = this_layer_sim_obj.filter_sram_reads_list
+            ofmap_sram_start_cycle_list = this_layer_sim_obj.ofmap_sram_start_cycle_list
+            ofmap_sram_stop_cycle_list = this_layer_sim_obj.ofmap_sram_stop_cycle_list
+            ofmap_sram_writes_list = this_layer_sim_obj.ofmap_sram_writes_list
+
+            ifmap_dram_start_cycle_list = this_layer_sim_obj.ifmap_dram_start_cycle_list
+            ifmap_dram_stop_cycle_list = this_layer_sim_obj.ifmap_dram_stop_cycle_list
+            ifmap_dram_reads_list = this_layer_sim_obj.ifmap_dram_reads_list
+            filter_dram_start_cycle_list = this_layer_sim_obj.filter_dram_start_cycle_list
+            filter_dram_stop_cycle_list = this_layer_sim_obj.filter_dram_stop_cycle_list
+            filter_dram_reads_list = this_layer_sim_obj.filter_dram_reads_list
+            ofmap_dram_start_cycle_list = this_layer_sim_obj.ofmap_dram_start_cycle_list
+            ofmap_dram_stop_cycle_list = this_layer_sim_obj.ofmap_dram_stop_cycle_list
+            ofmap_dram_writes_list = this_layer_sim_obj.ofmap_dram_writes_list
+
+            self.detailed_report_avg_items += [statistics.mean(ifmap_sram_start_cycle_list)]
+            self.detailed_report_avg_items += [statistics.mean(ifmap_sram_stop_cycle_list)]
+            self.detailed_report_avg_items += [statistics.mean(ifmap_sram_reads_list)]
+            self.detailed_report_avg_items += [statistics.mean(filter_sram_start_cycle_list)]
+            self.detailed_report_avg_items += [statistics.mean(filter_sram_stop_cycle_list)]
+            self.detailed_report_avg_items += [statistics.mean(filter_sram_reads_list)]
+            self.detailed_report_avg_items += [statistics.mean(ofmap_sram_start_cycle_list)]
+            self.detailed_report_avg_items += [statistics.mean(ofmap_sram_stop_cycle_list)]
+            self.detailed_report_avg_items += [statistics.mean(ofmap_sram_writes_list)]
+
+            self.detailed_report_avg_items += [statistics.mean(ifmap_dram_start_cycle_list)]
+            self.detailed_report_avg_items += [statistics.mean(ifmap_dram_stop_cycle_list)]
+            self.detailed_report_avg_items += [statistics.mean(ifmap_dram_reads_list)]
+            self.detailed_report_avg_items += [statistics.mean(filter_dram_start_cycle_list)]
+            self.detailed_report_avg_items += [statistics.mean(filter_dram_stop_cycle_list)]
+            self.detailed_report_avg_items += [statistics.mean(filter_dram_reads_list)]
+            self.detailed_report_avg_items += [statistics.mean(ofmap_dram_start_cycle_list)]
+            self.detailed_report_avg_items += [statistics.mean(ofmap_dram_stop_cycle_list)]
+            self.detailed_report_avg_items += [statistics.mean(ofmap_dram_writes_list)]
+
+           
+        self.detailed_report_ready = True
 
     def save_all_cycle_reports(self):
-        print('WIP')
+        assert self.cycles_report_ready
+        compute_report_name = self.top_path + 'traces/' + '/COMPUTE_REPORT.csv'
+        compute_report = open(compute_report_name, 'w')
+        header = 'LayerID, Total Cycles, Stall Cycles, Overall Util %, Mapping Efficiency %, Compute Util %,\n'
+        columns = header.count(',') - 1
+        compute_report.write(header)
+
+        for lid in range(self.workload_obj.get_num_layers()):
+            log = str(lid) +', '
+            log += ', '.join([str(x) for x in self.cycles_report_avg_items[lid * columns:lid * columns + 5]])
+            log += ',\n'
+            compute_report.write(log)
+
+        compute_report.close()
+
 
     def save_all_bw_reports(self):
-        print('WIP')
+        assert self.bandwidth_report_ready
+
+        bandwidth_report_name = self.top_path + 'traces' + '/BANDWIDTH_REPORT.csv'
+        bandwidth_report = open(bandwidth_report_name, 'w')
+        header = 'LayerID, Avg IFMAP SRAM BW, Avg FILTER SRAM BW, Avg OFMAP SRAM BW, '
+        header += 'Avg IFMAP DRAM BW, Avg FILTER DRAM BW, Avg OFMAP DRAM BW,\n'
+        columns = header.count(',') - 1
+
+        bandwidth_report.write(header)
+
+        for lid in range(self.workload_obj.get_num_layers()):
+            log = str(lid) +', '
+            log += ', '.join([str(x) for x in self.bandwidth_report_avg_items[lid * columns:lid * columns + columns]])
+            log += ',\n'
+            bandwidth_report.write(log)
+        
+        bandwidth_report.close()
+
+
 
     def save_all_detailed_reports(self):
-        print('WIP')
+        assert self.detailed_report_ready
 
-    def save_traces(self):
-        print('WIP')
+        detailed_report_name = self.top_path + 'traces' + '/DETAILED_ACCESS_REPORT.csv'
+        detailed_report = open(detailed_report_name, 'w')
+        header = 'LayerID, '
+        header += 'SRAM IFMAP Start Cycle, SRAM IFMAP Stop Cycle, SRAM IFMAP Reads, '
+        header += 'SRAM Filter Start Cycle, SRAM Filter Stop Cycle, SRAM Filter Reads, '
+        header += 'SRAM OFMAP Start Cycle, SRAM OFMAP Stop Cycle, SRAM OFMAP Writes, '
+        header += 'DRAM IFMAP Start Cycle, DRAM IFMAP Stop Cycle, DRAM IFMAP Reads, '
+        header += 'DRAM Filter Start Cycle, DRAM Filter Stop Cycle, DRAM Filter Reads, '
+        header += 'DRAM OFMAP Start Cycle, DRAM OFMAP Stop Cycle, DRAM OFMAP Writes,\n'
+        columns = header.count(',') - 1
+
+        detailed_report.write(header)
+
+        for lid in range(self.workload_obj.get_num_layers()):
+            log = str(lid) +', '
+            log += ', '.join([str(x) for x in self.detailed_report_avg_items[lid * columns:lid * columns + columns]])
+            log += ',\n'
+            detailed_report.write(log)
+        
+        detailed_report.close()
+
 
 
