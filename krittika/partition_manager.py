@@ -56,7 +56,7 @@ class PartitionManager:
                                                 )
 
             entry = [lid, input_parts, filter_parts, opt_unit, opt_dataflow]
-            self.partition_table = [entry]
+            self.partition_table += [entry]
 
     #
     def create_opt_const_df_part_table(self):
@@ -75,7 +75,7 @@ class PartitionManager:
                                                 )
 
             entry = [lid, input_parts, filter_parts, opt_unit, opt_dataflow]
-            self.partition_table = [entry]
+            self.partition_table += [entry]
 
     #
     def create_opt_ifmap_part_table(self):
@@ -94,7 +94,7 @@ class PartitionManager:
                                                )
 
             entry = [lid, input_parts, filter_parts, opt_unit, opt_dataflow]
-            self.partition_table = [entry]
+            self.partition_table += [entry]
 
     #
     def create_opt_filter_part_table(self):
@@ -113,7 +113,7 @@ class PartitionManager:
                                                )
 
             entry = [lid, input_parts, filter_parts, opt_unit, opt_dataflow]
-            self.partition_table = [entry]
+            self.partition_table += [entry]
 
     #
     def search_layer_opt_config(self, layer_id=0, part_list=None,

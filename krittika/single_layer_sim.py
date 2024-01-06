@@ -65,7 +65,7 @@ class SingleLayerSim:
 
         self.ifmap_dram_reads_list = []
         self.filter_dram_reads_list = []
-        self.ofmap_dram_reads_list = []
+        self.ofmap_dram_writes_list = []
 
         self.avg_ifmap_dram_bw_list = []
         self.avg_filter_dram_bw_list = []
@@ -195,10 +195,10 @@ class SingleLayerSim:
 
             # Compute report
             num_compute = compute_system.get_num_compute()
-            num_mac_unit = compute_system.get_num_mac_unit()
+            num_mac_unit = compute_system.get_num_mac_units()
             total_cycles = memory_system.get_total_compute_cycles()
             stall_cycles = memory_system.get_stall_cycles()
-            overall_util = (num_compute * 100) / total_cycles * num_mac_unit
+            overall_util = (num_compute * 100) / (total_cycles * num_mac_unit)
             mapping_eff = compute_system.get_avg_mapping_efficiency() * 100
             compute_util = compute_system.get_avg_compute_utilization() * 100
 
@@ -248,7 +248,7 @@ class SingleLayerSim:
 
             self.ifmap_dram_reads_list += [ifmap_dram_reads]
             self.filter_dram_reads_list += [filter_dram_reads]
-            self.ofmap_dram_reads_list += [ofmap_dram_writes]
+            self.ofmap_dram_writes_list += [ofmap_dram_writes]
 
             # BW calc for DRAM access
             avg_ifmap_dram_bw = ifmap_dram_reads / (ifmap_dram_stop_cycle - ifmap_dram_start_cycle + 1)
