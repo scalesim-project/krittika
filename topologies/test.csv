@@ -1,0 +1,2 @@
+gemm, 100, 150, 100
+activation, relu

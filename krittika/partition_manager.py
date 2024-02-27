@@ -46,17 +46,20 @@ class PartitionManager:
         num_layers = self.workload.get_num_layers()
         partitions_list = StaticUtilities.get_factors_as_pairs(num_cores)
         dataflow_list = ['os', 'is', 'ws']
-
+        layer_params = self.workload.get_layer_params()
         for lid in range(num_layers):
-            opt_unit, opt_dataflow, input_parts, filter_parts \
-                = self.search_layer_opt_config( layer_id=lid,
+            layer_params = self.workload.get_layer_params(lid)
+            if (layer_params[0] in ['conv', 'gemm']):
+                opt_unit, opt_dataflow, input_parts, filter_parts \
+                    = self.search_layer_opt_config( layer_id=lid,
                                                 part_list=partitions_list,
                                                 matmul_dataflow_list=dataflow_list,
                                                 vec_dataflow_list=dataflow_list
                                                 )
 
-            entry = [lid, input_parts, filter_parts, opt_unit, opt_dataflow]
-            self.partition_table += [entry]
+                entry = [lid, input_parts, filter_parts, opt_unit, opt_dataflow]
+            # entry = [0, 1, 4, 'matmul', 'ws']
+                self.partition_table += [entry]
 
     #
     def create_opt_const_df_part_table(self):
@@ -67,15 +70,17 @@ class PartitionManager:
         vector_dataflow_list = [self.config.get_vector_dataflow()]
 
         for lid in range(num_layers):
-            opt_unit, opt_dataflow, input_parts, filter_parts \
-                = self.search_layer_opt_config( layer_id=lid,
+            layer_params = self.workload.get_layer_params(lid)
+            if (layer_params[0] in ['conv', 'gemm']):
+                opt_unit, opt_dataflow, input_parts, filter_parts \
+                    = self.search_layer_opt_config( layer_id=lid,
                                                 part_list=partitions_list,
                                                 matmul_dataflow_list=matmul_dataflow_list,
                                                 vec_dataflow_list=vector_dataflow_list
                                                 )
 
-            entry = [lid, input_parts, filter_parts, opt_unit, opt_dataflow]
-            self.partition_table += [entry]
+                entry = [lid, input_parts, filter_parts, opt_unit, opt_dataflow]
+                self.partition_table += [entry]
 
     #
     def create_opt_ifmap_part_table(self):
@@ -86,8 +91,10 @@ class PartitionManager:
         vector_dataflow_list = [self.config.get_vector_dataflow()]
 
         for lid in range(num_layers):
-            opt_unit, opt_dataflow, input_parts, filter_parts \
-                = self.search_layer_opt_config(layer_id=lid,
+            layer_params = self.workload.get_layer_params(lid)
+            if (layer_params[0] in ['conv', 'gemm']):
+                opt_unit, opt_dataflow, input_parts, filter_parts \
+                    = self.search_layer_opt_config(layer_id=lid,
                                                part_list=partitions_list,
                                                matmul_dataflow_list=matmul_dataflow_list,
                                                vec_dataflow_list=vector_dataflow_list
@@ -105,8 +112,10 @@ class PartitionManager:
         vector_dataflow_list = [self.config.get_vector_dataflow()]
 
         for lid in range(num_layers):
-            opt_unit, opt_dataflow, input_parts, filter_parts \
-                = self.search_layer_opt_config(layer_id=lid,
+            layer_params = self.workload.get_layer_params(lid)
+            if (layer_params[0] in ['conv', 'gemm']):
+                opt_unit, opt_dataflow, input_parts, filter_parts \
+                    = self.search_layer_opt_config(layer_id=lid,
                                                part_list=partitions_list,
                                                matmul_dataflow_list=matmul_dataflow_list,
                                                vec_dataflow_list=vector_dataflow_list
@@ -143,7 +152,7 @@ class PartitionManager:
             if opt_matmul_runtime < opt_vector_runtime:
                 return opt_matmul_part_entries
             else:
-                return opt_vector_runtime
+                return opt_vector_part_entries
         elif use_matmul:
             return opt_matmul_part_entries
         else:
@@ -152,7 +161,7 @@ class PartitionManager:
     #
     def search_matmul_layer_opt_config(self, layer_id=0, part_list=None, dataflow_list=None):
         min_runtime = 10 ** 10
-        M, N, K = self.workload.get_transformed_mnk_dimensions()[layer_id]
+        M, N, K = self.workload.get_transformed_mnk_dimensions(layer_id)
 
         arr_row, arr_col = self.config.get_matmul_dims()
 
@@ -178,7 +187,7 @@ class PartitionManager:
     #
     def search_vector_layer_opt_config(self, layer_id=0, part_list=None, dataflow_list=None):
         min_runtime = 10 ** 10
-        M, N, K = self.workload.get_transformed_mnk_dimensions()[layer_id]
+        M, N, K = self.workload.get_transformed_mnk_dimensions(layer_id)
 
         num_vec_units = self.config.get_vector_dim()
 
@@ -275,13 +284,16 @@ class PartitionManager:
                 first = False
             else:
                 elems = row.strip().split(',')
-                entry = [int(e.strip()) for e in elems[1:-1]]
+                entry = [int(e.strip()) for e in elems[0:-2]]
                 df = elems[-1].strip()
+                unit = elems[-2].strip()
+                assert unit in ['matmul', 'vector']
                 assert df in ['os', 'ws', 'is']
 
-                entry += [df]
+                entry += [unit, df]
 
                 self.partition_table += [entry]
+                print(entry)
 
         self.partition_table_valid = True
 

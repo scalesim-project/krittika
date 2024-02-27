@@ -6,12 +6,13 @@ from krittika.compute.vector.vector_ws import VectorWS
 from krittika.compute.mat_mul.systolic_mat_mul_os import SystolicMatMulOS
 from krittika.compute.mat_mul.systolic_mat_mul_ws import SystolicMatMulWS
 from krittika.compute.mat_mul.systolic_mat_mul_is import SystolicMatMulIS
+from krittika.compute.simd.simd import simd
 
 
 class ComputeNode:
     def __init__(self):
         # Valid identifiers
-        self.valid_compute_units = ['matmul', 'vector']
+        self.valid_compute_units = ['matmul', 'vector', 'simd']
         self.valid_dataflow = ['os', 'ws', 'is']
 
         # Member Objects
@@ -36,7 +37,7 @@ class ComputeNode:
     def set_params(self,
                    config=KrittikaConfig(),
                    compute_unit='matmul',
-                   dataflow='ws'):
+                   dataflow='ws', optype = 'relu'):
 
         assert compute_unit in self.valid_compute_units
         assert dataflow in self.valid_dataflow
@@ -98,6 +99,12 @@ class ComputeNode:
 
             num_vec_units = self.config_obj.get_vector_dim()
             self.selected_compute_node.set_params(num_vec_units)
+        
+        elif compute_unit == 'simd':
+            self.selected_compute_node = simd()
+            num_simd_units = self.config_obj.get_simd_length()
+            self.selected_compute_node.set_params(num_units=num_simd_units, simd_op = optype)
+
 
         self.params_set = True
 
@@ -121,12 +128,15 @@ class ComputeNode:
                     op_inmat1=self.filter_matrix,
                     op_inmat2=self.ifmap_matrix
                 )
-            else:
+            elif self.compute_unit == 'vector' or self.compute_unit == 'matmul':
                 self.selected_compute_node.set_operands(
                     op_outmat=self.ofmap_matrix,
                     op_inmat1=self.ifmap_matrix,
                     op_inmat2=self.filter_matrix
                 )
+            elif self.compute_unit =='simd':
+                self.selected_compute_node.set_operands(op_matrix=ifmap_opmat)
+                self.selected_compute_node.calc_simd_unit()
 
     #
     def calc_demand_matrices(self):
@@ -152,21 +162,34 @@ class ComputeNode:
     #
     def get_num_compute(self):
         assert self.operands_valid
-
-        num_compute = self.ifmap_matrix.shape[0] * self.ifmap_matrix.shape[1] * self.filter_matrix.shape[1]
+        if self.compute_unit in ['matmul', 'vector']:
+            num_compute = self.ifmap_matrix.shape[0] * self.ifmap_matrix.shape[1] * self.filter_matrix.shape[1]
+        elif self.compute_unit == 'simd':
+            num_compute = self.ifmap_matrix.shape[0] * self.ifmap_matrix.shape[1] 
         return num_compute
 
     #
-    def get_num_mac_units(self):
+    def get_num_units(self):
         assert self.params_set
 
-        return self.selected_compute_node.get_num_mac()
+        if self.compute_unit in ['matmul', 'vector']:
+            num_units = self.selected_compute_node.get_num_mac()
+        elif self.compute_unit == 'simd':
+            num_units = self.config_obj.get_simd_length()
+        return num_units
     
     #
     def get_avg_mapping_efficiency(self):
         assert self.operands_valid
 
         return self.selected_compute_node.get_avg_mapping_efficiency()
+    
+    #
+    def get_total_cycles(self):
+        assert self.operands_valid
+
+        return self.selected_compute_node.get_compute_cycles()
+
 
     #
     def get_avg_compute_utilization(self):

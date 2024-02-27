@@ -145,6 +145,34 @@ class SingleLayerSim:
         self.compute_done = True
         
     #
+    def run_simd_all_parts(self, operand_matrix, optype = 'relu'):
+        
+        self.num_input_part, self.num_filter_part = self.partitioner_obj.get_layer_partitions(layer_id=self.layer_id)
+
+        input_rows_per_part = math.ceil((operand_matrix.shape[0]*operand_matrix.shape[1]) / (self.num_input_part*self.num_filter_part))
+
+        for inp_part in range(self.num_input_part):
+            for filt_part in range(self.num_filter_part):
+
+                operand_row_start = (inp_part+filt_part) * input_rows_per_part
+                operand_row_end = operand_row_start + input_rows_per_part
+                if operand_row_end > operand_matrix.shape[0]:
+                    operand_row_end = operand_matrix.shape[0]
+
+                operand_part = operand_matrix[operand_row_start: operand_row_end, :]
+
+                this_part_compute_node = ComputeNode()
+                this_part_compute_node.set_params(config=self.config_obj,
+                                                  compute_unit='simd', optype = optype)
+
+                this_part_compute_node.set_operands(ifmap_opmat=operand_matrix)
+
+                self.compute_node_list += [this_part_compute_node]
+
+        self.compute_done = True
+
+
+    #
     def run_mem_sim_all_parts(self):
         assert self.compute_done
 
@@ -185,6 +213,30 @@ class SingleLayerSim:
 
         self.mem_traces_done = True
 
+
+    # 
+    def gather_simd_report_items_across_cores(self):
+        assert self.compute_done
+        for core_id in range(len(self.compute_node_list)):
+            compute_system = self.compute_node_list[core_id]
+
+            # Compute report
+            num_compute = compute_system.get_num_compute()
+            num_unit = compute_system.get_num_units()
+            total_cycles = compute_system.get_total_cycles()
+            
+            stall_cycles = 0
+
+            overall_util = (num_compute * 100) / (total_cycles * num_unit)
+            mapping_eff = compute_system.get_avg_mapping_efficiency() * 100
+            compute_util = compute_system.get_avg_compute_utilization() * 100
+
+            self.total_cycles_list += [total_cycles]
+            self.stall_cycles_list += [stall_cycles]
+            self.overall_util_list += [overall_util]
+            self.mapping_eff_list += [mapping_eff]
+            self.compute_util_list += [compute_util]
+
     #
     def gather_report_items_across_cores(self):
         assert self.compute_done and self.mem_traces_done
@@ -195,10 +247,11 @@ class SingleLayerSim:
 
             # Compute report
             num_compute = compute_system.get_num_compute()
-            num_mac_unit = compute_system.get_num_mac_units()
+            num_unit = compute_system.get_num_units()
             total_cycles = memory_system.get_total_compute_cycles()
+            
             stall_cycles = memory_system.get_stall_cycles()
-            overall_util = (num_compute * 100) / (total_cycles * num_mac_unit)
+            overall_util = (num_compute * 100) / (total_cycles * num_unit)
             mapping_eff = compute_system.get_avg_mapping_efficiency() * 100
             compute_util = compute_system.get_avg_compute_utilization() * 100
 
@@ -300,6 +353,15 @@ class SingleLayerSim:
         for core_id in range(len(self.compute_node_list)):
             this_core_dir = l2_dir + '/core' + str(core_id)
             self.check_and_build(this_core_dir)
+
+    def get_ofmap_operand_matrix(self):
+        
+        if not self.compute_done:
+            self.run_compute_all_parts()
+
+        _, _, ofmap_matrix = self.op_mat_obj.get_all_operand_matrix()
+        return ofmap_matrix
+
 
 
     @staticmethod

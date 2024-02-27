@@ -18,6 +18,8 @@ class KrittikaConfig:
         self.vector_dim = 1
         self.vector_default_dataflow = 'ws'
 
+        self.simd_length = 1
+
         self.default_ifmap_offset = 0
         self.default_filter_offset = 10 ** 7
         self.default_ofmap_offset = 2 * 10 ** 7
@@ -82,6 +84,11 @@ class KrittikaConfig:
         else:
             self.vector_present = False
 
+        simd_length = int(cfg.get(section, 'simd length'))
+        assert simd_length > 0, 'SIMD length must be greater than 0'
+        self.simd_length = simd_length
+        print(self.simd_length)
+
         part_strategy = cfg.get(section, 'Partition Strategy')
         assert part_strategy in ['USER', 'IFMAP', 'FILTER', 'CONST_DF', 'AUTO'], \
             'Invalid partition mode ' + part_strategy + '. Supported vals: [USER, AUTO, IFMAP, FILTER, CONST_DF]'
@@ -135,6 +142,7 @@ class KrittikaConfig:
                         matmul_arr_row=1, matmul_arr_col=1,
                         matmul_dataflow='',
                         vector_macs=1, vector_dataflow='',
+                        simd_length=1,
                         ifmap_offset=0, filter_offset=10**7, ofmap_offset=2*10**7,
                         partition_mode='',
                         ifmap_sram_kb=1, filter_sram_kb=1, ofmap_sram_kb=1,
@@ -147,6 +155,7 @@ class KrittikaConfig:
         assert matmul_dataflow in ['os', 'ws', 'is'], 'Invalid dataflow: ' + matmul_dataflow
         assert vector_macs > 0, 'Vector dimensions should be non zero and positive'
         assert vector_dataflow in ['os', 'ws', 'is'], 'Invalid dataflow: ' + vector_dataflow
+        assert simd_length > 0, 'SIMD length must be greater than 0'
         assert ifmap_offset >= 0, 'Offsets should be non negative integers'
         assert filter_offset >= 0, 'Offsets should be non negative integers'
         assert ofmap_offset >= 0, 'Offsets should be non negative integers'
@@ -167,6 +176,7 @@ class KrittikaConfig:
         self.set_matmul_dataflow(input_dataflow=matmul_dataflow)
         self.set_vector_dim(vector_mac=vector_macs)
         self.set_vector_dataflow(input_dataflow=vector_dataflow)
+        self.set_simd_length(simd_length=simd_length)
         self.set_operand_offsets(ifmap_offset=ifmap_offset, filter_offset=filter_offset, ofmap_offset=ofmap_offset)
         self.set_partition_mode(part_mode=partition_mode)
         self.set_per_unit_sram_sizes_kb(ifmap_sram_kb=ifmap_sram_kb, filter_sram_kb=filter_sram_kb,
@@ -217,6 +227,13 @@ class KrittikaConfig:
         assert input_dataflow in ['os', 'ws', 'is'], 'Invalid dataflow: ' + input_dataflow
 
         self.vector_default_dataflow = input_dataflow
+
+    #
+    def set_simd_length(self, simd_length=1):
+        assert simd_length > 0, 'SIMD length must be greater than 0'
+
+        self.simd_length = simd_length
+
 
     #
     def set_operand_offsets(self, ifmap_offset=0, filter_offset=10 ** 7, ofmap_offset=2 * 10 ** 7):
@@ -299,6 +316,11 @@ class KrittikaConfig:
     def get_vector_dataflow(self):
         assert self.config_valid and self.vector_present
         return self.vector_default_dataflow
+
+    #
+    def get_simd_length(self):
+        assert self.config_valid
+        return self.simd_length
 
     #
     def get_operand_offsets(self):
