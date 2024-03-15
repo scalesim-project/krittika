@@ -1,7 +1,7 @@
 import os
 import statistics
 
-from scalesim.topology_utils import topologies
+from krittika.workload_manager import WorkloadManager
 from scalesim.scale_config import scale_config
 from scalesim.compute.operand_matrix import operand_matrix
 from krittika.config.krittika_config import KrittikaConfig
@@ -14,7 +14,7 @@ class Simulator:
         # Objects
         self.config_obj = KrittikaConfig()
         self.partition_obj = PartitionManager()
-        self.workload_obj = topologies()
+        self.workload_obj = WorkloadManager()
 
         # State
         self.verbose = True
@@ -52,8 +52,10 @@ class Simulator:
         # Read the user input and files and prepare the objects
         self.config_obj.read_config_from_file(filename=config_filename)
 
-        self.workload_obj = topologies()
-        self.workload_obj.load_arrays(topofile=workload_filename)
+        self.workload_obj = WorkloadManager()
+        self.workload_obj.read_topologies(workload_filename=workload_filename)
+        
+        # print(self.workload_obj.get_simd_operation(0))
 
         self.partition_obj.set_params(config_obj=self.config_obj,
                                       workload_obj=self.workload_obj
@@ -94,26 +96,44 @@ class Simulator:
             if self.verbose:
                 print('Running Layer ' + str(layer_id))
             this_layer_op_mat_obj = operand_matrix()
-
-            this_layer_op_mat_obj.set_params(config_obj=single_arr_config,
+            layer_params = self.workload_obj.get_layer_params(layer_id)
+            if (layer_params[0] in ['conv', 'gemm']):
+                this_layer_op_mat_obj.set_params(config_obj=single_arr_config,
                                              topoutil_obj=self.workload_obj,
                                              layer_id=layer_id)
-            this_layer_op_mat_obj.create_operand_matrices()
+                this_layer_op_mat_obj.create_operand_matrices()
 
-            this_layer_sim = SingleLayerSim()
-            this_layer_sim.set_params(config_obj=self.config_obj,
+                this_layer_sim = SingleLayerSim()
+                this_layer_sim.set_params(config_obj=self.config_obj,
                                       op_mat_obj=this_layer_op_mat_obj,
                                       partitioner_obj=self.partition_obj,
                                       layer_id=layer_id,
                                       log_top_path=self.top_path,
                                       verbosity=self.verbose)
-            this_layer_sim.run()
-            self.single_layer_objects_list += [this_layer_sim]
+                this_layer_sim.run()
+                self.single_layer_objects_list += [this_layer_sim]
 
-            if self.verbose:
-                print('SAVING TRACES')
-            this_layer_sim.save_traces()
-            this_layer_sim.gather_report_items_across_cores()
+                if self.verbose:
+                    print('SAVING TRACES')
+                this_layer_sim.save_traces()
+                this_layer_sim.gather_report_items_across_cores()
+            elif (layer_params[0] in ['activation']):
+                op_matrix = self.single_layer_objects_list[layer_id-1].get_ofmap_operand_matrix()
+
+                this_layer_sim = SingleLayerSim()
+                this_layer_sim.set_params(config_obj=self.config_obj,
+                                      op_mat_obj=this_layer_op_mat_obj,
+                                      partitioner_obj=self.partition_obj,
+                                      layer_id=layer_id,
+                                      log_top_path=self.top_path,
+                                      verbosity=self.verbose)
+                this_layer_sim.run_simd_all_parts(operand_matrix=op_matrix, optype = layer_params[1])
+                self.single_layer_objects_list += [this_layer_sim]
+                
+                this_layer_sim.gather_simd_report_items_across_cores()
+
+
+            
 
         self.runs_done = True
         self.generate_all_reports()
@@ -132,17 +152,19 @@ class Simulator:
         assert self.runs_done
 
         for lid in range(self.workload_obj.get_num_layers()):
-            this_layer_sim_obj = self.single_layer_objects_list[lid]
-            total_cycles_list = this_layer_sim_obj.total_cycles_list
-            stall_cycles_list = this_layer_sim_obj.stall_cycles_list
-            overall_util_list = this_layer_sim_obj.overall_util_list
-            mapping_eff_list = this_layer_sim_obj.mapping_eff_list
-            compute_util_list = this_layer_sim_obj.compute_util_list
-            self.cycles_report_avg_items += [statistics.mean(total_cycles_list)]
-            self.cycles_report_avg_items += [statistics.mean(stall_cycles_list)]
-            self.cycles_report_avg_items += [statistics.mean(overall_util_list)]
-            self.cycles_report_avg_items += [statistics.mean(mapping_eff_list)]
-            self.cycles_report_avg_items += [statistics.mean(compute_util_list)]
+            layer_params = self.workload_obj.get_layer_params(lid)
+            if (layer_params[0] in ['conv', 'gemm', 'activation']):
+                this_layer_sim_obj = self.single_layer_objects_list[lid]
+                total_cycles_list = this_layer_sim_obj.total_cycles_list
+                stall_cycles_list = this_layer_sim_obj.stall_cycles_list
+                overall_util_list = this_layer_sim_obj.overall_util_list
+                mapping_eff_list = this_layer_sim_obj.mapping_eff_list
+                compute_util_list = this_layer_sim_obj.compute_util_list
+                self.cycles_report_avg_items += [statistics.mean(total_cycles_list)]
+                self.cycles_report_avg_items += [statistics.mean(stall_cycles_list)]
+                self.cycles_report_avg_items += [statistics.mean(overall_util_list)]
+                self.cycles_report_avg_items += [statistics.mean(mapping_eff_list)]
+                self.cycles_report_avg_items += [statistics.mean(compute_util_list)]
 
         self.cycles_report_ready = True
 
@@ -151,20 +173,22 @@ class Simulator:
         assert self.runs_done
 
         for lid in range(self.workload_obj.get_num_layers()):
-            this_layer_sim_obj = self.single_layer_objects_list[lid]
-            avg_ifmap_sram_bw_list = this_layer_sim_obj.avg_ifmap_sram_bw_list
-            avg_ifmap_dram_bw_list = this_layer_sim_obj.avg_ifmap_dram_bw_list
-            avg_filter_sram_bw_list = this_layer_sim_obj.avg_filter_sram_bw_list
-            avg_filter_dram_bw_list = this_layer_sim_obj.avg_filter_dram_bw_list
-            avg_ofmap_sram_bw_list = this_layer_sim_obj.avg_ofmap_sram_bw_list
-            avg_ofmap_dram_bw_list = this_layer_sim_obj.avg_ofmap_dram_bw_list
+            layer_params = self.workload_obj.get_layer_params(lid)
+            if (layer_params[0] in ['conv', 'gemm']):
+                this_layer_sim_obj = self.single_layer_objects_list[lid]
+                avg_ifmap_sram_bw_list = this_layer_sim_obj.avg_ifmap_sram_bw_list
+                avg_ifmap_dram_bw_list = this_layer_sim_obj.avg_ifmap_dram_bw_list
+                avg_filter_sram_bw_list = this_layer_sim_obj.avg_filter_sram_bw_list
+                avg_filter_dram_bw_list = this_layer_sim_obj.avg_filter_dram_bw_list
+                avg_ofmap_sram_bw_list = this_layer_sim_obj.avg_ofmap_sram_bw_list
+                avg_ofmap_dram_bw_list = this_layer_sim_obj.avg_ofmap_dram_bw_list
             
-            self.bandwidth_report_avg_items += [statistics.mean(avg_ifmap_sram_bw_list)]
-            self.bandwidth_report_avg_items += [statistics.mean(avg_filter_sram_bw_list)]
-            self.bandwidth_report_avg_items += [statistics.mean(avg_ofmap_sram_bw_list)]
-            self.bandwidth_report_avg_items += [statistics.mean(avg_ifmap_dram_bw_list)]
-            self.bandwidth_report_avg_items += [statistics.mean(avg_filter_dram_bw_list)]
-            self.bandwidth_report_avg_items += [statistics.mean(avg_ofmap_dram_bw_list)]
+                self.bandwidth_report_avg_items += [statistics.mean(avg_ifmap_sram_bw_list)]
+                self.bandwidth_report_avg_items += [statistics.mean(avg_filter_sram_bw_list)]
+                self.bandwidth_report_avg_items += [statistics.mean(avg_ofmap_sram_bw_list)]
+                self.bandwidth_report_avg_items += [statistics.mean(avg_ifmap_dram_bw_list)]
+                self.bandwidth_report_avg_items += [statistics.mean(avg_filter_dram_bw_list)]
+                self.bandwidth_report_avg_items += [statistics.mean(avg_ofmap_dram_bw_list)]
 
         self.bandwidth_report_ready = True
 
@@ -174,46 +198,48 @@ class Simulator:
         assert self.runs_done
 
         for lid in range(self.workload_obj.get_num_layers()):
-            this_layer_sim_obj = self.single_layer_objects_list[lid]
-            ifmap_sram_start_cycle_list = this_layer_sim_obj.ifmap_sram_start_cycle_list
-            ifmap_sram_stop_cycle_list = this_layer_sim_obj.ifmap_sram_stop_cycle_list
-            ifmap_sram_reads_list = this_layer_sim_obj.ifmap_sram_reads_list
-            filter_sram_start_cycle_list = this_layer_sim_obj.filter_sram_start_cycle_list
-            filter_sram_stop_cycle_list = this_layer_sim_obj.filter_sram_stop_cycle_list
-            filter_sram_reads_list = this_layer_sim_obj.filter_sram_reads_list
-            ofmap_sram_start_cycle_list = this_layer_sim_obj.ofmap_sram_start_cycle_list
-            ofmap_sram_stop_cycle_list = this_layer_sim_obj.ofmap_sram_stop_cycle_list
-            ofmap_sram_writes_list = this_layer_sim_obj.ofmap_sram_writes_list
+            layer_params = self.workload_obj.get_layer_params(lid)
+            if (layer_params[0] in ['conv', 'gemm']):
+                this_layer_sim_obj = self.single_layer_objects_list[lid]
+                ifmap_sram_start_cycle_list = this_layer_sim_obj.ifmap_sram_start_cycle_list
+                ifmap_sram_stop_cycle_list = this_layer_sim_obj.ifmap_sram_stop_cycle_list
+                ifmap_sram_reads_list = this_layer_sim_obj.ifmap_sram_reads_list
+                filter_sram_start_cycle_list = this_layer_sim_obj.filter_sram_start_cycle_list
+                filter_sram_stop_cycle_list = this_layer_sim_obj.filter_sram_stop_cycle_list
+                filter_sram_reads_list = this_layer_sim_obj.filter_sram_reads_list
+                ofmap_sram_start_cycle_list = this_layer_sim_obj.ofmap_sram_start_cycle_list
+                ofmap_sram_stop_cycle_list = this_layer_sim_obj.ofmap_sram_stop_cycle_list
+                ofmap_sram_writes_list = this_layer_sim_obj.ofmap_sram_writes_list
 
-            ifmap_dram_start_cycle_list = this_layer_sim_obj.ifmap_dram_start_cycle_list
-            ifmap_dram_stop_cycle_list = this_layer_sim_obj.ifmap_dram_stop_cycle_list
-            ifmap_dram_reads_list = this_layer_sim_obj.ifmap_dram_reads_list
-            filter_dram_start_cycle_list = this_layer_sim_obj.filter_dram_start_cycle_list
-            filter_dram_stop_cycle_list = this_layer_sim_obj.filter_dram_stop_cycle_list
-            filter_dram_reads_list = this_layer_sim_obj.filter_dram_reads_list
-            ofmap_dram_start_cycle_list = this_layer_sim_obj.ofmap_dram_start_cycle_list
-            ofmap_dram_stop_cycle_list = this_layer_sim_obj.ofmap_dram_stop_cycle_list
-            ofmap_dram_writes_list = this_layer_sim_obj.ofmap_dram_writes_list
+                ifmap_dram_start_cycle_list = this_layer_sim_obj.ifmap_dram_start_cycle_list
+                ifmap_dram_stop_cycle_list = this_layer_sim_obj.ifmap_dram_stop_cycle_list
+                ifmap_dram_reads_list = this_layer_sim_obj.ifmap_dram_reads_list
+                filter_dram_start_cycle_list = this_layer_sim_obj.filter_dram_start_cycle_list
+                filter_dram_stop_cycle_list = this_layer_sim_obj.filter_dram_stop_cycle_list
+                filter_dram_reads_list = this_layer_sim_obj.filter_dram_reads_list
+                ofmap_dram_start_cycle_list = this_layer_sim_obj.ofmap_dram_start_cycle_list
+                ofmap_dram_stop_cycle_list = this_layer_sim_obj.ofmap_dram_stop_cycle_list
+                ofmap_dram_writes_list = this_layer_sim_obj.ofmap_dram_writes_list
 
-            self.detailed_report_avg_items += [statistics.mean(ifmap_sram_start_cycle_list)]
-            self.detailed_report_avg_items += [statistics.mean(ifmap_sram_stop_cycle_list)]
-            self.detailed_report_avg_items += [statistics.mean(ifmap_sram_reads_list)]
-            self.detailed_report_avg_items += [statistics.mean(filter_sram_start_cycle_list)]
-            self.detailed_report_avg_items += [statistics.mean(filter_sram_stop_cycle_list)]
-            self.detailed_report_avg_items += [statistics.mean(filter_sram_reads_list)]
-            self.detailed_report_avg_items += [statistics.mean(ofmap_sram_start_cycle_list)]
-            self.detailed_report_avg_items += [statistics.mean(ofmap_sram_stop_cycle_list)]
-            self.detailed_report_avg_items += [statistics.mean(ofmap_sram_writes_list)]
+                self.detailed_report_avg_items += [statistics.mean(ifmap_sram_start_cycle_list)]
+                self.detailed_report_avg_items += [statistics.mean(ifmap_sram_stop_cycle_list)]
+                self.detailed_report_avg_items += [statistics.mean(ifmap_sram_reads_list)]
+                self.detailed_report_avg_items += [statistics.mean(filter_sram_start_cycle_list)]
+                self.detailed_report_avg_items += [statistics.mean(filter_sram_stop_cycle_list)]
+                self.detailed_report_avg_items += [statistics.mean(filter_sram_reads_list)]
+                self.detailed_report_avg_items += [statistics.mean(ofmap_sram_start_cycle_list)]
+                self.detailed_report_avg_items += [statistics.mean(ofmap_sram_stop_cycle_list)]
+                self.detailed_report_avg_items += [statistics.mean(ofmap_sram_writes_list)]
 
-            self.detailed_report_avg_items += [statistics.mean(ifmap_dram_start_cycle_list)]
-            self.detailed_report_avg_items += [statistics.mean(ifmap_dram_stop_cycle_list)]
-            self.detailed_report_avg_items += [statistics.mean(ifmap_dram_reads_list)]
-            self.detailed_report_avg_items += [statistics.mean(filter_dram_start_cycle_list)]
-            self.detailed_report_avg_items += [statistics.mean(filter_dram_stop_cycle_list)]
-            self.detailed_report_avg_items += [statistics.mean(filter_dram_reads_list)]
-            self.detailed_report_avg_items += [statistics.mean(ofmap_dram_start_cycle_list)]
-            self.detailed_report_avg_items += [statistics.mean(ofmap_dram_stop_cycle_list)]
-            self.detailed_report_avg_items += [statistics.mean(ofmap_dram_writes_list)]
+                self.detailed_report_avg_items += [statistics.mean(ifmap_dram_start_cycle_list)]
+                self.detailed_report_avg_items += [statistics.mean(ifmap_dram_stop_cycle_list)]
+                self.detailed_report_avg_items += [statistics.mean(ifmap_dram_reads_list)]
+                self.detailed_report_avg_items += [statistics.mean(filter_dram_start_cycle_list)]
+                self.detailed_report_avg_items += [statistics.mean(filter_dram_stop_cycle_list)]
+                self.detailed_report_avg_items += [statistics.mean(filter_dram_reads_list)]
+                self.detailed_report_avg_items += [statistics.mean(ofmap_dram_start_cycle_list)]
+                self.detailed_report_avg_items += [statistics.mean(ofmap_dram_stop_cycle_list)]
+                self.detailed_report_avg_items += [statistics.mean(ofmap_dram_writes_list)]
 
            
         self.detailed_report_ready = True
@@ -227,10 +253,12 @@ class Simulator:
         compute_report.write(header)
 
         for lid in range(self.workload_obj.get_num_layers()):
-            log = str(lid) +', '
-            log += ', '.join([str(x) for x in self.cycles_report_avg_items[lid * columns:lid * columns + 5]])
-            log += ',\n'
-            compute_report.write(log)
+            layer_params = self.workload_obj.get_layer_params(lid)
+            if (layer_params[0] in ['conv', 'gemm', 'activation']):
+                log = str(lid) +', '
+                log += ', '.join([str(x) for x in self.cycles_report_avg_items[lid * columns:lid * columns + 5]])
+                log += ',\n'
+                compute_report.write(log)
 
         compute_report.close()
 
@@ -247,10 +275,12 @@ class Simulator:
         bandwidth_report.write(header)
 
         for lid in range(self.workload_obj.get_num_layers()):
-            log = str(lid) +', '
-            log += ', '.join([str(x) for x in self.bandwidth_report_avg_items[lid * columns:lid * columns + columns]])
-            log += ',\n'
-            bandwidth_report.write(log)
+            layer_params = self.workload_obj.get_layer_params(lid)
+            if (layer_params[0] in ['conv', 'gemm']):
+                log = str(lid) +', '
+                log += ', '.join([str(x) for x in self.bandwidth_report_avg_items[lid * columns:lid * columns + columns]])
+                log += ',\n'
+                bandwidth_report.write(log)
         
         bandwidth_report.close()
 
@@ -273,10 +303,12 @@ class Simulator:
         detailed_report.write(header)
 
         for lid in range(self.workload_obj.get_num_layers()):
-            log = str(lid) +', '
-            log += ', '.join([str(x) for x in self.detailed_report_avg_items[lid * columns:lid * columns + columns]])
-            log += ',\n'
-            detailed_report.write(log)
+            layer_params = self.workload_obj.get_layer_params(lid)
+            if (layer_params[0] in ['conv', 'gemm']):
+                log = str(lid) +', '
+                log += ', '.join([str(x) for x in self.detailed_report_avg_items[lid * columns:lid * columns + columns]])
+                log += ',\n'
+                detailed_report.write(log)
         
         detailed_report.close()
 
