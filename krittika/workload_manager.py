@@ -12,16 +12,6 @@ class WorkloadManager:
         self.topo_valid = False
         self.topo_hyper_param_valid = False
         self.topo_spatiotemp_params_valid = False
-
-    def test(self):
-        self.read_topologies('./topologies/test.csv')
-        print(self.topo_list)
-        self.topo_calc_hyperparams()
-        print(self.get_layer_ifmap_dims(3))
-        self.get_layer_window_size(3)
-        self.set_spatio_temporal_params()
-        print(self.get_layer_spatio_temp_dim_arrays(3))
-        print(self.get_spatiotemporal_dims(3,'ws'))
         
     #
     def read_topologies(self, workload_filename=''):
@@ -115,7 +105,6 @@ class WorkloadManager:
                 num_mac = ofmap_h * ofmap_w * filt_h * filt_w * num_ch * num_filt
                 window_size = filt_h * filt_w * num_ch
                 entry = [layer_id, ofmap_h, ofmap_w, num_mac, window_size]
-                print(entry)
                 self.layers_calculated_hyperparams.append(entry)
         self.topo_hyper_param_valid = True
 
