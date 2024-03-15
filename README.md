@@ -35,3 +35,14 @@ Additional optional parameters
 2. -o <path_to_the_log_dump_directory> 
 3. --verbose <True/False> (Flag to change the verbosity of the run)
 4. --savetrace <True/False> (Flag to indicate if the traces should be saved)
+
+## *Topology file*
+The topology file is a *CSV* file which decribes the layers of the workload topology. The layers are typically described as convolution/GEMM/activation layer parameters as shown in the example below
+
+![topology file](https://github.com/scalesim-project/krittika/blob/main/documentation/resources/topology%20file.png "topology file")
+
+Conv and GEMM layers follow scalesim topology structure [link](https://scale-sim-project.readthedocs.io/en/latest/topology.html)
+
+The only difference is that there is *no comma* at the end of each layer.
+
+Support for RELU activation is also added and can be used just as shown in the image.
