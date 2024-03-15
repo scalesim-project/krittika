@@ -58,7 +58,6 @@ class PartitionManager:
                                                 )
 
                 entry = [lid, input_parts, filter_parts, opt_unit, opt_dataflow]
-            # entry = [0, 1, 4, 'matmul', 'ws']
                 self.partition_table += [entry]
 
     #
@@ -293,7 +292,6 @@ class PartitionManager:
                 entry += [unit, df]
 
                 self.partition_table += [entry]
-                print(entry)
 
         self.partition_table_valid = True
 

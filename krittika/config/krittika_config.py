@@ -87,7 +87,6 @@ class KrittikaConfig:
         simd_length = int(cfg.get(section, 'simd length'))
         assert simd_length > 0, 'SIMD length must be greater than 0'
         self.simd_length = simd_length
-        print(self.simd_length)
 
         part_strategy = cfg.get(section, 'Partition Strategy')
         assert part_strategy in ['USER', 'IFMAP', 'FILTER', 'CONST_DF', 'AUTO'], \

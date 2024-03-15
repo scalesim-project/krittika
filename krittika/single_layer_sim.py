@@ -111,7 +111,6 @@ class SingleLayerSim:
     def run_compute_all_parts(self):
         ifmap_matrix, filter_matrix, ofmap_matrix = self.op_mat_obj.get_all_operand_matrix()
         compute_unit, opt_dataflow = self.partitioner_obj.get_opt_compute_params(layer_id=self.layer_id)
-
         input_rows_per_part = math.ceil(ifmap_matrix.shape[0] / self.num_input_part)
         filter_cols_per_part = math.ceil(filter_matrix.shape[1] / self.num_filter_part)
 
@@ -137,7 +136,6 @@ class SingleLayerSim:
                 this_part_compute_node.set_operands(ifmap_opmat=ifmap_part,
                                                     filter_opmat=filter_part,
                                                     ofmap_opmat=ofmap_part)
-
                 this_part_compute_node.calc_demand_matrices()
 
                 self.compute_node_list += [this_part_compute_node]
