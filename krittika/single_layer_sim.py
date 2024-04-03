@@ -145,9 +145,10 @@ class SingleLayerSim:
     #
     def run_simd_all_parts(self, operand_matrix, optype = 'relu'):
         
-        self.num_input_part, self.num_filter_part = self.partitioner_obj.get_layer_partitions(layer_id=self.layer_id)
+        self.num_input_part = 1
+        self.num_filter_part = self.config_obj.get_num_cores()
 
-        input_rows_per_part = math.ceil((operand_matrix.shape[0]*operand_matrix.shape[1]) / (self.num_input_part*self.num_filter_part))
+        input_rows_per_part = math.ceil((operand_matrix.shape[0]) / (self.num_input_part*self.num_filter_part))
 
         for inp_part in range(self.num_input_part):
             for filt_part in range(self.num_filter_part):
@@ -163,7 +164,7 @@ class SingleLayerSim:
                 this_part_compute_node.set_params(config=self.config_obj,
                                                   compute_unit='simd', optype = optype)
 
-                this_part_compute_node.set_operands(ifmap_opmat=operand_matrix)
+                this_part_compute_node.set_operands(ifmap_opmat=operand_part)
 
                 self.compute_node_list += [this_part_compute_node]
 
