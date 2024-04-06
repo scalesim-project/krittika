@@ -35,5 +35,5 @@ dependencies:
     - six==1.16.0
     - tqdm==4.66.2
     - tzdata==2024.1
-    - e ./dependencies/scalesim
+    - -e ./dependencies/scalesim
 prefix: /home/hice1/sprathipati6/.conda/envs/5ree_hml_proj_test_setup
