@@ -4,4 +4,4 @@ configparser
 numpy
 pandas
 cython
-scalesim
+-e dependencies/scalesim 
