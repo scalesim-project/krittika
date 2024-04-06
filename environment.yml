@@ -5,25 +5,37 @@ dependencies:
   - _libgcc_mutex=0.1=main
   - _openmp_mutex=5.1=1_gnu
   - bzip2=1.0.8=h5eee18b_5
+  - c-ares=1.19.1=h5eee18b_0
   - ca-certificates=2024.3.11=h06a4308_0
+  - cmake=3.22.1=h1fce559_0
   - expat=2.5.0=h6a678d5_0
+  - krb5=1.20.1=h143b758_1
   - ld_impl_linux-64=2.38=h1181459_1
+  - libcurl=8.5.0=h251f7ec_0
+  - libedit=3.1.20230828=h5eee18b_0
+  - libev=4.33=h7f8727e_1
   - libffi=3.4.4=h6a678d5_0
   - libgcc-ng=11.2.0=h1234567_1
   - libgomp=11.2.0=h1234567_1
+  - libnghttp2=1.57.0=h2d74bed_0
+  - libssh2=1.10.0=hdbd6064_2
   - libstdcxx-ng=11.2.0=h1234567_1
   - libuuid=1.41.5=h5eee18b_0
+  - libuv=1.44.2=h5eee18b_0
+  - lz4-c=1.9.4=h6a678d5_0
   - ncurses=6.4=h6a678d5_0
   - openssl=3.0.13=h7f8727e_0
   - pip=23.3.1=py312h06a4308_0
   - python=3.12.2=h996f2a0_0
   - readline=8.2=h5eee18b_0
+  - rhash=1.4.3=hdbd6064_0
   - setuptools=68.2.2=py312h06a4308_0
   - sqlite=3.41.2=h5eee18b_0
   - tk=8.6.12=h1ccaba5_0
   - wheel=0.41.2=py312h06a4308_0
   - xz=5.4.6=h5eee18b_0
   - zlib=1.2.13=h5eee18b_0
+  - zstd=1.5.5=hc292b87_0
   - pip:
     - absl-py==2.1.0
     - configparser==6.0.1
@@ -35,5 +47,6 @@ dependencies:
     - six==1.16.0
     - tqdm==4.66.2
     - tzdata==2024.1
-    - -e ./dependencies/scalesim
+    - -e dependencies/AstraSimANoCModel
+    - -e dependencies/ScaleSimKrittikaBackend
 prefix: /home/hice1/sprathipati6/.conda/envs/5ree_hml_proj_test_setup
