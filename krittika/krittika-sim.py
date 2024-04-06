@@ -2,6 +2,8 @@ import argparse
 
 from krittika.simulator import Simulator
 
+from dependencies.AstraSimANoCModel import sample_wrapper
+
 if __name__ == '__main__':
     '''
         Input parameters:
@@ -12,6 +14,8 @@ if __name__ == '__main__':
         --verbose: Verbosity of the run (Default: True)
         --savetrace: If True then saves the traces (Default: True) 
     '''
+
+    sample_wrapper.py_common_bridge_sanity()
 
     parser = argparse.ArgumentParser()
 
