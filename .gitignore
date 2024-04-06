@@ -137,3 +137,8 @@ dmypy.json
 # Any outdirs
 outdir/
 out/
+
+# Seemingly dumb, but Krittika only dumps traces in cwd
+# Ignoring for now
+# FIXME: Need to fix this later
+krittika/traces/
