@@ -1,6 +1,0 @@
-[submodule "dependencies/scalesim"]
-	path = dependencies/scalesim
-	url = https://github.com/scalesim-project/scale-sim-v2.git
-[submodule "dependencies/astra-network-analytical"]
-	path = dependencies/astra-network-analytical
-	url = https://github.com/astra-sim/astra-network-analytical.git
