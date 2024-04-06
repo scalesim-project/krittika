@@ -1,0 +1,6 @@
+[submodule "dependencies/ScaleSimKrittikaBackend"]
+	path = dependencies/ScaleSimKrittikaBackend
+	url = https://github.com/5ree/ScaleSimKrittikaBackend.git
+[submodule "dependencies/AstraSimANoCModel"]
+	path = dependencies/AstraSimANoCModel
+	url = https://github.com/5ree/AstraSimANoCModel.git
