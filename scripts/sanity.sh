@@ -14,6 +14,7 @@ krittika_dir="${tot}/krittika"
 # TODO: Add tests when ready
 
 # Test 1: Just basic sanity run
+# FIXME: Krittika actually doesn't dump traces to outdir
 cd "${krittika_dir}";
-mkdir ../outdir/sanity/
-python3 ./krittika-sim.py -c ../configs/krittika.cfg -t ../topologies/test.csv -p ../partitions/temp_part.csv -o ../outdir/sanity > ../outdir/sanity/run.log
+mkdir -p ../outdir/sanity/;
+python3 ./krittika-sim.py -c ../configs/krittika.cfg -t ../topologies/test.csv -p ../partitions/temp_part.csv -o ../outdir/sanity > ../outdir/sanity/run.log;
