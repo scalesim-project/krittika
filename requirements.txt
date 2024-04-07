@@ -3,6 +3,6 @@ tqdm
 configparser
 numpy
 pandas
-cython
+Cython
 -e dependencies/AstraSimANoCModel
 -e dependencies/ScaleSimKrittikaBackend
