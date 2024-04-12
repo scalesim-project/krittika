@@ -6,5 +6,3 @@ pandas
 Cython
 -e dependencies/AstraSimANoCModel
 -e dependencies/ScaleSimKrittikaBackend
-# This is apparently bad form but it fixes our import problem so yolo
--e .
