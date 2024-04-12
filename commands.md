@@ -1,4 +1,4 @@
-i# PACE-ICE setup:
+# PACE-ICE setup:
 
     # Login
     ssh <userID>@login-ice.pace.gatech.edu
