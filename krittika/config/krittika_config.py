@@ -114,6 +114,10 @@ class KrittikaConfig:
         assert filter_sram_sz > 0, 'Invalid SRAM size'
         assert ofmap_sram_sz > 0, 'Invalid SRAM size'
 
+        self.per_unit_ifmap_sram_size_kb = ifmap_sram_sz
+        self.per_unit_filter_sram_size_kb = filter_sram_sz
+        self.per_unit_ofmap_sram_size_kb = ofmap_sram_sz
+        
         section = 'INTERFACE'
         bw_mode = cfg.get(section, 'Bandwidth Mode')
         assert bw_mode in ['USER', 'CALC'], 'Invalid mode of operation: ' + bw_mode + '. Valid modes are [USER, CALC]'
