@@ -90,6 +90,7 @@ class SystolicMatMulWS:
     def create_all_operand_demand_matrix(self):
         self.create_input_operand_demand_matrices()
         self.create_out_operand_demand_matrix()
+        self.compute_unit.demand_mat_ready_flag=True
 
     #
     def get_mat1_operand_demand_matrix(self):
