@@ -1,5 +1,6 @@
 import os
 import statistics
+import logging
 
 from krittika.workload_manager import WorkloadManager
 from scalesim.scale_config import scale_config
@@ -21,8 +22,7 @@ class Simulator:
         self.trace_gen_flag = True
         self.autopartition = False
         self.single_layer_objects_list = []
-        self.top_path='./'
-        self.reports_dir_path = './'
+        self.top_path=None
 
         # REPORT Structures
         self.total_cycles_report_grid = []
@@ -69,7 +69,15 @@ class Simulator:
         self.verbose = verbose
         self.trace_gen_flag = save_traces
 
-        self.reports_dir_path = reports_dir_path
+        # Check whether user input path is valid.
+        # If so, use this path to save the reports. Otherwise, use the current working directory.
+        full_top_path = os.path.join(os.getcwd(), reports_dir_path)
+        full_top_path = os.path.join(full_top_path, '')
+        if (os.path.exists(full_top_path)):
+            self.top_path = full_top_path
+        else:
+            logging.warning('Invalid output path, please check your input. Falling back to current working directory.')
+            self.top_path = './'
 
         self.params_valid = True
 
@@ -246,8 +254,8 @@ class Simulator:
 
     def save_all_cycle_reports(self):
         assert self.cycles_report_ready
-        compute_report_name = self.top_path + 'traces/' + '/COMPUTE_REPORT.csv'
-        compute_report = open(compute_report_name, 'w')
+        compute_report_name = self.top_path + 'traces' + '/COMPUTE_REPORT.csv'
+        compute_report = open(compute_report_name, 'w+')
         header = 'LayerID, Total Cycles, Stall Cycles, Overall Util %, Mapping Efficiency %, Compute Util %,\n'
         columns = header.count(',') - 1
         compute_report.write(header)
@@ -267,7 +275,7 @@ class Simulator:
         assert self.bandwidth_report_ready
 
         bandwidth_report_name = self.top_path + 'traces' + '/BANDWIDTH_REPORT.csv'
-        bandwidth_report = open(bandwidth_report_name, 'w')
+        bandwidth_report = open(bandwidth_report_name, 'w+')
         header = 'LayerID, Avg IFMAP SRAM BW, Avg FILTER SRAM BW, Avg OFMAP SRAM BW, '
         header += 'Avg IFMAP DRAM BW, Avg FILTER DRAM BW, Avg OFMAP DRAM BW,\n'
         columns = header.count(',') - 1
@@ -290,7 +298,7 @@ class Simulator:
         assert self.detailed_report_ready
 
         detailed_report_name = self.top_path + 'traces' + '/DETAILED_ACCESS_REPORT.csv'
-        detailed_report = open(detailed_report_name, 'w')
+        detailed_report = open(detailed_report_name, 'w+')
         header = 'LayerID, '
         header += 'SRAM IFMAP Start Cycle, SRAM IFMAP Stop Cycle, SRAM IFMAP Reads, '
         header += 'SRAM Filter Start Cycle, SRAM Filter Stop Cycle, SRAM Filter Reads, '
