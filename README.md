@@ -9,13 +9,13 @@ Plans to support
 ## *Installing the package*
 Getting started is simple! Krittika is completely written in python and uses scalesim-v2 in backend.
 
-You can clone the SCALE-Sim(v2) repository using the following command (ssh)
+You can clone the SCALE-Sim(v3) repository using the following command (ssh)
 
-```$ git clone git@github.com:scalesim-project/scale-sim-v2.git```
+```$ git clone git@github.com:scalesim-project/scale-sim-v3.git```
 
 Alternative, you can also clone using https 
 
-```$ git clone https://github.com/scalesim-project/scale-sim-v2.git```
+```$ git clone https://github.com/scalesim-project/scale-sim-v3.git```
 
 If you are running for the first time and do not have all the dependencies installed, please install them first using the following command
 
