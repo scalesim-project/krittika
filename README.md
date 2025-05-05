@@ -1,10 +1,22 @@
 # Krittika (Pleiades)
-Distibuted ML Accelerator simulator
+Mult-core ML Accelerator simulator
 
-Plans to support
-1. Distributed execution of DNN layers
-2. Heterogenous cores
-3. Multitenant execution
+
+### Key Features
+1. **Spatio-Temporal Partitioning:**  
+   - SCALE-Sim v3 enhances the spatial partitioning capability of SCALE-Sim v2 by introducing *spatio-temporal partitioning*.  
+   - This approach partitions workloads along both spatial and temporal dimensions, optimizing compute cycles and memory footprint.  
+   - Three partitioning schemes (spatial, spatio-temporal 1, and spatio-temporal 2) are evaluated, showing trade-offs between memory and compute efficiency 
+
+2. **Hierarchical Memory Structures:**  
+   - SCALE-Sim v3 models on-chip memory using a hierarchical structure, including shared **L2 scratchpad memory** for multiple cores.  
+   - This reflects the memory architectures used in modern AI accelerators, improving simulation accuracy.
+
+3. **Support for Heterogeneous Tensor Cores:**  
+   - The simulator supports configurations where tensor cores handle a mix of matrix and vector operations.  
+   - It enables researchers to explore how diverse workloads can be efficiently mapped to tensor cores in realistic scenarios
+
+This multi-core feature in SCALE-Sim v3 significantly advances the capabilities of the simulator, making it a valuable tool for designing and analyzing modern AI accelerators.
 
 ## *Installing the package*
 Getting started is simple! Krittika is completely written in python and uses scalesim-v2 in backend.
