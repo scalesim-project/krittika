@@ -1,5 +1,5 @@
 import math
-import os.path
+import os
 
 from scalesim.compute.operand_matrix import operand_matrix
 from scalesim.memory.double_buffered_scratchpad_mem import double_buffered_scratchpad
@@ -365,12 +365,4 @@ class SingleLayerSim:
 
     @staticmethod
     def check_and_build(dirname):
-        if not os.path.isdir(dirname):
-            cmd = 'mkdir ' + dirname
-            os.system(cmd)
-
-
-
-
-
-
+        os.makedirs(dirname, exist_ok=True)
