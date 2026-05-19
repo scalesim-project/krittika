@@ -159,6 +159,16 @@ class WorkloadManager:
         return layer_params[8:10]
 
     #
+    def get_layer_sparsity_ratio(self, layer_id=0):
+        if not (self.topo_valid or self.num_layers - 1 < layer_id):
+            print("ERROR: topologies.get_layer_sparsity_ratio: Invalid layer id")
+
+        layer_params = self.topo_list[layer_id]
+        assert layer_params[0] in ['conv', 'gemm'], 'It should be a conv/gemm layer'
+
+        return 1, 1
+
+    #
     def get_layer_window_size(self, layer_id=0):
         if not (self.topo_valid or self.num_layers - 1 < layer_id):
             print("ERROR: topologies.get_layer_num_filter: Invalid layer id")

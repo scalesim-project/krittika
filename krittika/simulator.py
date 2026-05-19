@@ -5,6 +5,7 @@ import logging
 from krittika.workload_manager import WorkloadManager
 from scalesim.scale_config import scale_config
 from scalesim.compute.operand_matrix import operand_matrix
+from scalesim.layout_utils import layouts
 from krittika.config.krittika_config import KrittikaConfig
 from krittika.partition_manager import PartitionManager
 from krittika.single_layer_sim import SingleLayerSim
@@ -99,6 +100,7 @@ class Simulator:
         conf_list[10] = self.config_obj.get_bandwidth_use_mode()
         conf_list.append(self.config_obj.get_interface_bandwidths()[0])
         single_arr_config.update_from_list(conf_list=conf_list)
+        default_layout = layouts()
 
         for layer_id in range(num_layers):
             if self.verbose:
@@ -108,6 +110,7 @@ class Simulator:
             if (layer_params[0] in ['conv', 'gemm']):
                 this_layer_op_mat_obj.set_params(config_obj=single_arr_config,
                                              topoutil_obj=self.workload_obj,
+                                             layoututil_obj=default_layout,
                                              layer_id=layer_id)
                 this_layer_op_mat_obj.create_operand_matrices()
 
