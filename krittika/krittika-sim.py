@@ -2,6 +2,11 @@ import argparse
 
 from krittika.simulator import Simulator
 
+def str_to_bool(value):
+    if value.lower() not in ('true', 'false'):
+        raise argparse.ArgumentTypeError('Expected True or False.')
+    return value.lower() == 'true'
+
 if __name__ == '__main__':
     '''
         Input parameters:
@@ -35,12 +40,12 @@ if __name__ == '__main__':
                         help='Path to the log dump directory'
                         )
 
-    parser.add_argument('--verbose', metavar='Verbosity', type=bool,
+    parser.add_argument('--verbose', metavar='Verbosity', type=str_to_bool,
                         default=True,
                         help='Flag to change the verbosity of the run'
                         )
 
-    parser.add_argument('--savetrace', metavar='Save traces', type=bool,
+    parser.add_argument('--savetrace', metavar='Save traces', type=str_to_bool,
                         default=False,
                         help='Flag to indicate if the traces should be saved'
                         )

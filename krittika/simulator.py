@@ -120,10 +120,12 @@ class Simulator:
                                       verbosity=self.verbose)
                 this_layer_sim.run()
                 self.single_layer_objects_list += [this_layer_sim]
+                
+                if self.trace_gen_flag:
+                    if self.verbose:
+                        print('SAVING TRACES')
+                    this_layer_sim.save_traces()
 
-                if self.verbose:
-                    print('SAVING TRACES')
-                this_layer_sim.save_traces()
                 this_layer_sim.gather_report_items_across_cores()
             elif (layer_params[0] in ['activation']):
                 op_matrix = self.single_layer_objects_list[layer_id-1].get_ofmap_operand_matrix()
@@ -147,6 +149,7 @@ class Simulator:
         self.generate_all_reports()
 
     def generate_all_reports(self):
+        os.makedirs(os.path.join(self.top_path, 'traces'), exist_ok=True)
         self.create_cycles_report_structures()
         self.create_bandwidth_report_structures()
         self.create_detailed_report_structures()
